@@ -23,4 +23,4 @@ Copy `.env.example` to `.env` and fill in the required values.
 
 ## Deployment
 
-Pushed to `main` branch trigger a production deployment to Vercel Pages. Pull requests trigger preview deployments.
+Pushed to `main` branch trigger a production deployment to Vercel Pages. Pull requests trigger preview deployments. 
