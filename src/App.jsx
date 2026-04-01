@@ -4,7 +4,10 @@ import MainNav from './components/MainNav'
 import SubNav from './components/SubNav'
 import SearchBar from './components/SearchBar'
 import Hero from './components/Hero'
-import BookCard from './components/BookCard'
+import PromoBanners from './components/PromoBanners'
+import BookSection from './components/BookSection'
+import CommunityBanner from './components/CommunityBanner'
+import { trendingBooks, bestsellerBooks } from './data/books'
 
 function App() {
   const [activeMainItem, setActiveMainItem] = useState('Genre');
@@ -21,56 +24,30 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
-      <MainNav 
-        activeItem={activeMainItem} 
-        onItemClick={handleMainItemClick} 
+      <MainNav
+        activeItem={activeMainItem}
+        onItemClick={handleMainItemClick}
       />
       <div className="flex flex-col items-center bg-white border-b border-gray-200">
         <div className="w-fit">
-          <SubNav 
-            activeMainItem={activeMainItem} 
-            activeSubItem={activeSubItem} 
-            onSubItemClick={setActiveSubItem} 
+          <SubNav
+            activeMainItem={activeMainItem}
+            activeSubItem={activeSubItem}
+            onSubItemClick={setActiveSubItem}
           />
           <SearchBar onSearch={handleSearch} />
         </div>
       </div>
 
-      <Hero />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <Hero />
+        <PromoBanners />
+      </div>
 
-      {/* Page content area - Book Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          <BookCard />
-          <BookCard 
-            title="The 7 Habits of Highly Effective People"
-            author="Stephen R. Covey"
-            rating={4.8}
-            reviews={1240}
-            price={180}
-          />
-          <BookCard 
-            title="Atomic Habits"
-            author="James Clear"
-            rating={4.9}
-            reviews={2540}
-            price={220}
-          />
-          <BookCard 
-            title="Think and Grow Rich"
-            author="Napoleon Hill"
-            rating={4.7}
-            reviews={850}
-            price={160}
-          />
-          <BookCard 
-            title="Rich Dad Poor Dad"
-            author="Robert Kiyosaki"
-            rating={4.6}
-            reviews={980}
-            price={150}
-          />
-        </div>
+      <main className="pb-20">
+        <BookSection title="Trending" books={trendingBooks} />
+        <BookSection title="Bestsellers" books={bestsellerBooks} />
+        <CommunityBanner />
       </main>
     </div>
   )
