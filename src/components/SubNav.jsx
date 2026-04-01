@@ -45,7 +45,7 @@ const SubNav = ({ activeMainItem, activeSubItem, onSubItemClick }) => {
               <button
                 key={item}
                 onClick={() => onSubItemClick?.(item)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200 cursor-pointer
+                className={`px-4 py-1.5 rounded-full text-base font-medium whitespace-nowrap transition-colors duration-200 cursor-pointer
                   ${isActive
                     ? 'bg-[#F46B03] text-white border border-[#F46B03]'
                     : 'bg-white text-gray-600 border border-gray-300 hover:border-gray-400'
