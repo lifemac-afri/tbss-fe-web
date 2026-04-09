@@ -1,5 +1,7 @@
 const TOKEN_KEY = 'tbss_access_token';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 let _accessToken = sessionStorage.getItem(TOKEN_KEY) || null;
 let _refreshing = null;
 
@@ -15,7 +17,7 @@ function getToken() {
 
 async function refreshAccessToken() {
   if (_refreshing) return _refreshing;
-  _refreshing = fetch('/api/auth/token/refresh/', {
+  _refreshing = fetch(API_BASE + '/api/auth/token/refresh/', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -49,7 +51,7 @@ async function request(path, options = {}) {
     headers['Content-Type'] = headers['Content-Type'] || 'application/json';
   }
 
-  let res = await fetch(path, {
+  let res = await fetch(API_BASE + path, {
     ...options,
     credentials: 'include',
     headers,
@@ -59,7 +61,7 @@ async function request(path, options = {}) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
-      res = await fetch(path, {
+      res = await fetch(API_BASE + path, {
         ...options,
         credentials: 'include',
         headers,
