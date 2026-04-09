@@ -36,8 +36,8 @@ const ComingSoonPage = () => {
         <div className="lottie-right">
           <Lottie 
             animationData={underMaintenanceAnimation} 
-            loop={true} 
-            className="lottie-player"
+            loop={true}
+            style={{ width: '90%', height: 'auto', display: 'block', margin: '0 auto' }}
           />
         </div>
       </div>
