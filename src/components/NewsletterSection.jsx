@@ -1,0 +1,96 @@
+import React, { useRef, useState } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
+import api from '../lib/api';
+
+const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+
+const NewsletterSection = () => {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const recaptchaRef = useRef(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setError('');
+
+    let recaptcha_token = '';
+    if (SITE_KEY && recaptchaRef.current) {
+      recaptcha_token = recaptchaRef.current.getValue() || '';
+      if (!recaptcha_token) {
+        setError('Please complete the reCAPTCHA check.');
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.post('/api/newsletter/subscribe/', { email: email.trim(), recaptcha_token });
+      if (res.ok || res.status === 201) {
+        setSubmitted(true);
+        setEmail('');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.detail || 'Something went wrong. Please try again.');
+        recaptchaRef.current?.reset();
+      }
+    } catch {
+      setError('Could not connect. Please try again.');
+      recaptchaRef.current?.reset();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="w-full bg-[#EFA87A] py-12 px-6">
+      <div className="max-w-2xl mx-auto text-center">
+        <p className="text-white font-bold font-poppins text-lg sm:text-xl mb-8 leading-snug">
+          Subscribe to our newsletter for newest<br />book updates
+        </p>
+
+        {submitted ? (
+          <p className="text-white font-poppins text-sm bg-white/20 rounded-xl px-8 py-4 inline-block">
+            Thank you for subscribing! 🎉
+          </p>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="flex items-stretch rounded-xl overflow-hidden w-full shadow-sm">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Your email address"
+                required
+                className="flex-1 px-6 py-4 text-sm font-poppins text-gray-700 bg-[#F5CBA8] outline-none border-none"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-[#F46B03] hover:bg-[#C15300] transition-colors text-white font-bold font-poppins text-sm tracking-wide px-8 py-4 whitespace-nowrap disabled:opacity-70"
+              >
+                {loading ? '…' : 'SUBSCRIBE'}
+              </button>
+            </div>
+
+            {SITE_KEY && (
+              <div className="flex justify-center">
+                <ReCAPTCHA ref={recaptchaRef} sitekey={SITE_KEY} theme="light" />
+              </div>
+            )}
+
+            {error && (
+              <p className="text-white/90 text-xs bg-white/20 rounded-lg px-4 py-2 inline-block">
+                {error}
+              </p>
+            )}
+          </form>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default NewsletterSection;

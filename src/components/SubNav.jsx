@@ -1,10 +1,9 @@
 import React from 'react';
 
-// Sub-navigation items mapped to each main nav selection
 const subNavData = {
   Genre: [
     'All Books', 'Christian Literature', 'History', 'Mindset',
-    'Novels', 'Business', 'Personal growth', 'Diaries'
+    'Novels', 'Business', 'Personal Growth', 'Diaries'
   ],
   Bestsellers: [
     'All Bestsellers', 'Fiction', 'Non-Fiction', 'Children',
@@ -30,25 +29,22 @@ const subNavData = {
 
 const SubNav = ({ activeMainItem, activeSubItem, onSubItemClick }) => {
   const items = subNavData[activeMainItem] || [];
-
   if (items.length === 0) return null;
 
   return (
     <nav className="w-full bg-white py-3">
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-start gap-3 overflow-x-auto">
+        <div className="flex items-center justify-center gap-3 overflow-x-auto scrollbar-hide">
           {items.map((item) => {
-            const isActive = activeSubItem === item ||
-              (!activeSubItem && item === items[0]);
-
+            const isActive = activeSubItem === item || (!activeSubItem && item === items[0]);
             return (
               <button
                 key={item}
                 onClick={() => onSubItemClick?.(item)}
-                className={`px-4 py-1.5 rounded-full text-base font-medium whitespace-nowrap transition-colors duration-200 cursor-pointer
+                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200 cursor-pointer
                   ${isActive
-                    ? 'bg-[#F46B03] text-white border border-[#F46B03]'
-                    : 'bg-white text-gray-600 border border-gray-300 hover:border-gray-400'
+                    ? 'bg-[#F46B03] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800'
                   }`}
               >
                 {item}

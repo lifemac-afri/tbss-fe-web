@@ -1,82 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
-const Input = ({ 
-  label, 
-  icon, 
+const Input = forwardRef(({
+  label,
+  icon,
+  type = 'text',
   value: propValue,
   onChange: propOnChange,
   required = false,
-  ...props 
-}) => {
+  error,
+  helperText,
+  className = '',
+  ...props
+}, ref) => {
   const [internalValue, setInternalValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Support both controlled and uncontrolled usage
   const isControlled = propValue !== undefined;
   const value = isControlled ? propValue : internalValue;
 
   const handleChange = (e) => {
-    if (!isControlled) {
-      setInternalValue(e.target.value);
-    }
-    if (propOnChange) {
-      propOnChange(e);
-    }
+    if (!isControlled) setInternalValue(e.target.value);
+    propOnChange?.(e);
   };
 
   const isActive = isFocused || (value && value.toString().length > 0);
   const showRequired = required && touched && (!value || value.toString().length === 0);
+  const hasError = error || showRequired;
 
-  // Determine border color based on state
-  let borderColor = 'border-gray-300';
-  if (showRequired) {
-    borderColor = 'border-[#FF0000]';
-  } else if (isFocused) {
-    borderColor = 'border-[#F46B03]';
-  }
+  const borderClass = hasError
+    ? 'border-red-500 focus-within:border-red-500'
+    : isFocused
+    ? 'border-[#F46B03]'
+    : 'border-gray-300';
+
+  const inputType = type === 'password' ? (showPassword ? 'text' : 'password') : type;
 
   return (
-    <div className="relative w-full mt-4 mb-2">
-      <div className={`flex items-center border rounded w-full h-11 px-3 bg-white transition-colors duration-200 ${borderColor}`}>
-        
-        {/* Render Icon if passed */}
+    <div className={`relative w-full mt-4 mb-1 ${className}`}>
+      <div className={`flex items-center border rounded-lg w-full h-11 px-3 bg-white transition-colors duration-200 ${borderClass}`}>
         {icon && (
-          <div className="flex-shrink-0 mr-2 text-gray-500 flex items-center justify-center">
-            {icon}
-          </div>
+          <span className="mr-2 text-gray-400 flex-shrink-0">{icon}</span>
         )}
-
-        <input
-          value={value}
-          onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => { setIsFocused(false); setTouched(true); }}
-          className="w-full h-full outline-none bg-transparent text-sm text-gray-800"
-          {...props}
-        />
+        <div className="relative flex-1 h-full">
+          {label && (
+            <label
+              className={`absolute left-0 transition-all duration-200 pointer-events-none select-none
+                ${isActive
+                  ? 'top-0 text-[10px] text-[#F46B03] font-medium'
+                  : 'top-1/2 -translate-y-1/2 text-sm text-gray-400'
+                }`}
+            >
+              {label}{required && ' *'}
+            </label>
+          )}
+          <input
+            ref={ref}
+            type={inputType}
+            value={value}
+            onChange={handleChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => { setIsFocused(false); setTouched(true); }}
+            className={`w-full h-full bg-transparent outline-none text-sm text-gray-800 ${label ? 'pt-3' : ''}`}
+            {...props}
+          />
+        </div>
+        {type === 'password' && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="ml-2 text-gray-400 hover:text-gray-600 flex-shrink-0 focus:outline-none"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
       </div>
-
-      {/* Floating Label */}
-      <label
-        className={`absolute transition-all duration-200 pointer-events-none bg-white px-1 leading-none
-          ${isActive 
-            ? '-top-2 left-2 text-[11px] text-gray-600' 
-            : `top-3.5 text-sm text-gray-500 ${icon ? 'left-9' : 'left-3'}`
-          }
-        `}
-      >
-        {label}
-      </label>
-      
-      {/* Required field message */}
-      {showRequired && (
-        <span className="text-[#FF0000] text-xs absolute -bottom-5 left-1">
-          This field is required
-        </span>
+      {hasError && (
+        <p className="text-red-500 text-xs mt-1 ml-1">
+          {error || (showRequired ? `${label || 'This field'} is required` : '')}
+        </p>
+      )}
+      {helperText && !hasError && (
+        <p className="text-gray-400 text-xs mt-1 ml-1">{helperText}</p>
       )}
     </div>
   );
-};
+});
 
+Input.displayName = 'Input';
 export default Input;
