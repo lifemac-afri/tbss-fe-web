@@ -56,7 +56,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
         const list = Array.isArray(data) ? data : (data.results || []);
         setGenres(list);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
     navigate(`/shop?genre=${genreSlug}&sub_genre=${subSlug}`);
   };
 
-  const firstName = currentUser?.name?.split(' ')[0] || '';
+  const firstName = currentUser?.first_name || '';
 
   return (
     <nav className="w-full bg-white border-b border-gray-100 sticky top-0 z-40">
@@ -225,6 +225,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
             {isAuthenticated ? (
               /* Logged in — avatar + greeting + dropdown */
               <div className="hidden md:flex items-center gap-2.5 relative" ref={profileRef}>
+                {console.log(currentUser)}
                 {/* Greeting */}
                 <div className="text-right leading-none">
                   <p className="text-[10px] text-gray-400 font-medium">{getGreeting()}</p>
@@ -237,7 +238,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
                   className="w-9 h-9 rounded-full bg-[#F46B03] text-white text-sm font-bold hover:opacity-80 transition-opacity flex items-center justify-center shadow-sm"
                   aria-label="Account"
                 >
-                  {currentUser?.name?.[0]?.toUpperCase() || 'U'}
+                  { (currentUser?.first_name?.[0] || 'U').toUpperCase() + (currentUser?.last_name?.[0] || '').toUpperCase() }
                 </button>
 
                 {/* Dropdown */}
