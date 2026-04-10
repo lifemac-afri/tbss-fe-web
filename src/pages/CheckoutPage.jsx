@@ -333,8 +333,57 @@ const CheckoutPage = () => {
   const [form, setForm] = useState({
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
   });
+  const [waitingForApproval, setWaitingForApproval] = useState(false);
+  const [pollingCount, setPollingCount] = useState(0);
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  const startPolling = (id) => {
+    setWaitingForApproval(true);
+    setPollingCount(0);
+    
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get(`/api/orders/${id}/status/`);
+        const data = await res.json();
+        
+        if (data.status === 'paid') {
+          clearInterval(interval);
+          setOrderId(id);
+          clearCart();
+          setWaitingForApproval(false);
+          setStep(3);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+      
+      setPollingCount(prev => {
+        if (prev >= 20) { // 60 seconds (20 * 3s)
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 3000);
+    
+    return interval;
+  };
+
+  const manualCheck = async () => {
+    if (!orderId) return;
+    try {
+      const res = await api.post(`/api/orders/${orderId}/check-payment/`);
+      const data = await res.json();
+      if (data.status === 'paid') {
+        clearCart();
+        setWaitingForApproval(false);
+        setStep(3);
+      }
+    } catch (err) {
+      console.error("Manual check error:", err);
+    }
+  };
 
   const handlePay = async (method) => {
     const labels = { mtn: 'MTN Mobile Money', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo Money', card: 'Visa/Mastercard' };
@@ -342,16 +391,16 @@ const CheckoutPage = () => {
     setPaymentMethod(labels[method] || method);
 
     const payload = {
-      payment_method: method,
       customer_details: {
         name: form.name,
-        phone: form.phone,
+        phone: form.phone, // Delivery phone
         street: form.street,
         city: form.city,
         region: form.region,
         note: form.note,
+        payment_method: method,
+        payment_phone: method === 'card' ? '' : momo, // Payment phone from PaymentStep
       },
-      phone_number: form.phone,
       shipping_address: {
         name: form.name,
         phone: form.phone,
@@ -362,21 +411,20 @@ const CheckoutPage = () => {
     };
 
     try {
-      const res = await api.post('/api/cart/', payload);
+      // Corrected endpoint to /api/orders/
+      const res = await api.post('/api/orders/', payload);
       const data = await res.json();
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-        return;
+      
+      if (data.id) {
+        setOrderId(data.id);
+        if (method !== 'card') {
+          startPolling(data.id);
+        } else if (data.checkout_url) {
+          window.location.href = data.checkout_url;
+        }
       }
-      const id = data.id ? `#${String(data.id).slice(0, 8).toUpperCase()}` : `TBS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
-      setOrderId(id);
-      clearCart();
-      setStep(3);
-    } catch {
-      const id = `TBS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
-      setOrderId(id);
-      clearCart();
-      setStep(3);
+    } catch (err) {
+      console.error("Checkout error:", err);
     } finally {
       setPaying(false);
     }
@@ -433,6 +481,43 @@ const CheckoutPage = () => {
           )}
         </div>
       </div>
+
+      {/* Waiting for Approval Overlay */}
+      {waitingForApproval && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-10 h-10 border-4 border-[#F46B03] border-t-transparent rounded-full animate-spin" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Payment</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              A USSD prompt has been sent to your phone. Please enter your PIN to authorize the transaction.
+            </p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={manualCheck}
+                className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors"
+              >
+                I've made the payment
+              </button>
+              
+              {pollingCount >= 20 ? (
+                <button 
+                  onClick={() => setWaitingForApproval(false)}
+                  className="w-full py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Close & Check Orders Later
+                </button>
+              ) : (
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
+                  Waiting... {60 - (pollingCount * 3)}s
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
