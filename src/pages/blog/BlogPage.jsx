@@ -1,3 +1,4 @@
+import api from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -116,7 +117,7 @@ const BlogPage = () => {
     if (activeCategory !== 'All') params.set('category', activeCategory);
     params.set('page_size', 24);
 
-    fetch(`/api/blog/?${params.toString()}`)
+    api.get(`/api/blog/?${params.toString()}`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

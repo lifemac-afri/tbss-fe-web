@@ -1,3 +1,5 @@
+import api from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Bookmark, ChevronRight, Star, Share2, RotateCcw, Truck, Shield } from 'lucide-react';
@@ -39,10 +41,48 @@ const BookDetailPage = () => {
   const [qty, setQty] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
 
+  const { isAuthenticated } = useAuth();
+
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (reviewRating === 0) {
+      setReviewError('Please select a star rating.');
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewError('');
+    try {
+      const res = await api.post('/api/reviews/', {
+        product: book.id,
+        rating: reviewRating,
+        comment: reviewComment
+      });
+      if (!res.ok) {
+        let errData = {};
+        try { errData = await res.json(); } catch {}
+        throw new Error(errData.non_field_errors?.[0] || errData.detail || 'Failed to submit review.');
+      }
+      setReviewSuccess(true);
+      setReviewRating(0);
+      setReviewComment('');
+    } catch (err) {
+      setReviewError(err.message);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch(`/api/products/${id}/`)
+    api.get(`/api/products/${id}/`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -297,6 +337,97 @@ const BookDetailPage = () => {
                 {book.category && <><dt className="text-gray-500">Category</dt><dd className="font-medium text-gray-700">{book.category}</dd></>}
                 <dt className="text-gray-500">Format</dt><dd className="font-medium text-gray-700">{selectedFormat}</dd>
               </dl>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-12 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-sm">
+          <h2 className="text-xl font-bold text-gray-900 font-poppins mb-6">Customer Reviews</h2>
+          
+          <div className="flex flex-col lg:flex-row gap-10">
+            {/* Reviews List */}
+            <div className="flex-1 space-y-6">
+              {book.reviewList?.length > 0 ? (
+                book.reviewList.map((rev) => (
+                  <div key={rev.id} className="border-b border-gray-50 pb-5 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500">
+                        {rev.user_name?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <span className="font-semibold text-gray-800 text-sm">{rev.user_name}</span>
+                      <span className="text-gray-400 text-xs ml-auto">
+                        {new Date(rev.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <StarRating rating={rev.rating} size={14} />
+                    <p className="text-sm text-gray-600 mt-2 leading-relaxed">{rev.comment}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-xl">
+                  <p className="text-gray-500 text-sm">No reviews yet. Be the first to share your thoughts!</p>
+                </div>
+              )}
+            </div>
+
+            {/* Review Form */}
+            <div className="w-full lg:w-80 flex-shrink-0">
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-4">Write a Review</h3>
+                {!isAuthenticated ? (
+                  <p className="text-sm text-gray-600">
+                    Please <Link to="/login" className="text-[#F46B03] font-semibold hover:underline">log in</Link> to share your thoughts on this book.
+                  </p>
+                ) : reviewSuccess ? (
+                  <div className="text-center p-4 border border-green-200 bg-white rounded-xl">
+                    <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Shield size={20} />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-800">Review Submitted!</p>
+                    <p className="text-xs text-gray-500 mt-1">Your review is currently pending moderation by our team.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReviewSubmit} className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-1.5">Your Rating</p>
+                      <div className="flex items-center gap-1 text-[#F46B03]">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onMouseEnter={() => setReviewHover(star)}
+                            onMouseLeave={() => setReviewHover(0)}
+                            onClick={() => setReviewRating(star)}
+                            className="p-1 transition-transform hover:scale-110"
+                          >
+                            <Star size={22} className={star <= (reviewHover || reviewRating) ? "fill-current" : "text-gray-300"} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-1.5">Your Review</p>
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="What did you think of the book?"
+                        required
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-200 bg-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F46B03]/30 focus:border-[#F46B03]"
+                      />
+                    </div>
+                    {reviewError && <p className="text-xs text-red-500 font-medium">{reviewError}</p>}
+                    <button
+                      type="submit"
+                      disabled={reviewSubmitting}
+                      className="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-xl text-sm transition-colors disabled:opacity-60"
+                    >
+                      {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
           </div>
         </div>

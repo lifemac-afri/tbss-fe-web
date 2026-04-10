@@ -41,10 +41,10 @@ const DashboardLayout = () => {
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#F46B03] flex items-center justify-center text-white font-semibold">
-            {currentUser?.name?.[0]?.toUpperCase() || 'U'}
+            {(currentUser?.first_name?.[0] || 'U').toUpperCase() + (currentUser?.last_name?.[0] || '').toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-800 truncate">{currentUser?.name}</p>
+            <p className="text-sm font-semibold text-gray-800 truncate">{`${currentUser?.first_name || ''} ${currentUser?.last_name || ''}`.trim()}</p>
             <p className="text-xs text-gray-400 truncate">{currentUser?.email}</p>
           </div>
         </div>

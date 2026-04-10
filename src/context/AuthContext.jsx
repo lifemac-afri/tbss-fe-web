@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '../lib/api';
+import api, { API_BASE } from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async ({ email, password }) => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/login/', {
+      const res = await fetch(API_BASE + '/api/auth/login/', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
       const first_name = parts[0] || '';
       const last_name = parts.slice(1).join(' ') || '';
       const username = email;
-      const res = await fetch('/api/auth/register/', {
+      const res = await fetch(API_BASE + '/api/auth/register/', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
 
   const resendVerification = useCallback(async (email) => {
     try {
-      const res = await fetch('/api/auth/resend-verification/', {
+      const res = await fetch(API_BASE + '/api/auth/resend-verification/', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }) => {
 
   const forgotPassword = useCallback(async (email) => {
     try {
-      const res = await fetch('/api/auth/forgot-password/', {
+      const res = await fetch(API_BASE + '/api/auth/forgot-password/', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = useCallback(async ({ token, password }) => {
     try {
-      const res = await fetch('/api/auth/reset-password/', {
+      const res = await fetch(API_BASE + '/api/auth/reset-password/', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyEmail = useCallback(async (token) => {
     try {
-      const res = await fetch(`/api/auth/verify-email/?token=${encodeURIComponent(token)}`, {
+      const res = await fetch(API_BASE + `/api/auth/verify-email/?token=${encodeURIComponent(token)}`, {
         credentials: 'include',
       });
       const data = await res.json();

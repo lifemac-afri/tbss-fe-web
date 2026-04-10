@@ -13,9 +13,8 @@ const InputField = ({ label, type = 'text', value, onChange, placeholder, disabl
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F46B03]/30 focus:border-[#F46B03] transition-colors ${
-          disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-100' : 'bg-white border-gray-200'
-        }`}
+        className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F46B03]/30 focus:border-[#F46B03] transition-colors ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-100' : 'bg-white border-gray-200'
+          }`}
       />
       {suffix && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">{suffix}</div>
@@ -28,7 +27,7 @@ const AccountSettingsPage = () => {
   const { currentUser } = useAuth();
 
   const [profile, setProfile] = useState({
-    name: currentUser?.name || '',
+    name: `${currentUser?.first_name || ''} ${currentUser?.last_name || ''}`.trim(),
     email: currentUser?.email || '',
     phone: '',
     city: 'Accra',
@@ -107,7 +106,7 @@ const AccountSettingsPage = () => {
       {/* Avatar */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-[#F46B03] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-          {profile.name?.[0]?.toUpperCase() || 'U'}
+          {(currentUser?.first_name?.[0] || 'U').toUpperCase() + (currentUser?.last_name?.[0] || '').toUpperCase()}
         </div>
         <div>
           <p className="font-semibold text-gray-800">{profile.name}</p>

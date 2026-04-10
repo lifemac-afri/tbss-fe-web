@@ -1,3 +1,4 @@
+import api from '../../lib/api';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronRight, LayoutGrid, List, Search } from 'lucide-react';
@@ -194,7 +195,7 @@ const ShopPage = () => {
   }, [sortParam]);
 
   useEffect(() => {
-    fetch('/api/genres/')
+    api.get('/api/genres/')
       .then((r) => r.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : data.results || [];
@@ -215,7 +216,7 @@ const ShopPage = () => {
 
   useEffect(() => {
     if (!selectedGenre) { setSubGenres([]); return; }
-    fetch(`/api/sub-genres/?genre=${selectedGenre}`)
+    api.get(`/api/sub-genres/?genre=${selectedGenre}`)
       .then((r) => r.json())
       .then((data) => setSubGenres(Array.isArray(data) ? data : data.results || []))
       .catch(() => setSubGenres([]));
@@ -248,7 +249,7 @@ const ShopPage = () => {
     params.set('page', page);
     params.set('page_size', PAGE_SIZE);
 
-    fetch(`/api/products/?${params.toString()}`)
+    api.get(`/api/products/?${params.toString()}`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
