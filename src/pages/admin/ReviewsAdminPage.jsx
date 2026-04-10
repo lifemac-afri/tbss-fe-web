@@ -21,6 +21,9 @@ export default function ReviewsAdminPage() {
   
   // Pagination & Filter State
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'approved'
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   
   // Selection State
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -32,10 +35,10 @@ export default function ReviewsAdminPage() {
   const [modalNote, setModalNote] = useState('');
   const [modalSaving, setModalSaving] = useState(false);
 
-  const fetchReviews = useCallback(async () => {
+    const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      let url = '/api/admin/reviews/?ordering=-created_at';
+      let url = `/api/admin/reviews/?ordering=-created_at&page=${page}&page_size=20`;
       if (statusFilter === 'pending') url += '&is_approved=false';
       if (statusFilter === 'approved') url += '&is_approved=true';
       
@@ -43,13 +46,22 @@ export default function ReviewsAdminPage() {
       if (!res.ok) throw new Error('Failed to fetch reviews');
       
       const data = await res.json();
-      setReviews(Array.isArray(data) ? data : data.results || []);
+      if (data.results) {
+        setReviews(data.results);
+        setTotalPages(data.total_pages || Math.ceil(data.count / 20) || 1);
+        setTotalItems(data.count || 0);
+      } else {
+        const arr = Array.isArray(data) ? data : [];
+        setReviews(arr);
+        setTotalPages(1);
+        setTotalItems(arr.length);
+      }
     } catch (err) {
       showToast('error', err.message);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, showToast]);
+  }, [statusFilter, page, showToast]);
 
   useEffect(() => {
     fetchReviews();
@@ -147,7 +159,7 @@ export default function ReviewsAdminPage() {
           <div className="flex items-center gap-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               className="text-sm border-gray-200 rounded-lg px-3 py-2 bg-gray-50 outline-none"
             >
               <option value="all">All Statuses</option>
@@ -155,15 +167,18 @@ export default function ReviewsAdminPage() {
               <option value="approved">Approved</option>
             </select>
             
-            {selectedIds.size > 0 && (
-              <button
-                onClick={handleBulkApprove}
-                className="px-4 py-2 bg-green-50 text-green-700 text-sm font-semibold rounded-lg hover:bg-green-100 transition-colors flex items-center gap-2"
-              >
-                <CheckCircle size={16} />
-                Bulk Approve ({selectedIds.size})
-              </button>
-            )}
+                        <button
+              onClick={handleBulkApprove}
+              disabled={selectedIds.size === 0}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors ${
+                selectedIds.size > 0 
+                  ? 'bg-green-50 text-green-700 hover:bg-green-100' 
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <CheckCircle size={16} />
+              Bulk Approve {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+            </button>
           </div>
         </div>
 
@@ -269,7 +284,32 @@ export default function ReviewsAdminPage() {
         </div>
       </div>
 
-      {/* Moderation Modal */}
+      {/* Pagination Footer */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-sm">
+          <span className="text-sm text-gray-500">
+            Showing page <span className="font-medium text-gray-900">{page}</span> of <span className="font-medium text-gray-900">{totalPages}</span> ({totalItems} total reviews)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Moderation Modal  */}
       {modalOpen && activeReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">

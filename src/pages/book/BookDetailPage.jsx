@@ -348,8 +348,8 @@ const BookDetailPage = () => {
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Reviews List */}
             <div className="flex-1 space-y-6">
-              {book.reviews?.length > 0 ? (
-                book.reviews.map((rev) => (
+              {book.reviewList?.length > 0 ? (
+                book.reviewList.map((rev) => (
                   <div key={rev.id} className="border-b border-gray-50 pb-5 last:border-0 last:pb-0">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500">
