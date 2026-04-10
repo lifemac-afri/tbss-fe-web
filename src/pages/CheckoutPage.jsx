@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight, CheckCircle, MapPin, CreditCard, ShoppingBag, ArrowLeft, Copy } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../components/Toast';
 import logo from '../assets/logo/logo.png';
 import api from '../lib/api';
 
@@ -196,10 +197,7 @@ const PAYMENT_METHODS = [
   { id: 'card', label: 'Visa / Mastercard', hint: 'Card details', color: 'bg-gray-800' },
 ];
 
-const PaymentStep = ({ subtotal, onBack, onPay, paying }) => {
-  const [method, setMethod] = useState('mtn');
-  const [momo, setMomo] = useState('');
-  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
+const PaymentStep = ({ subtotal, onBack, onPay, paying, method, setMethod, momo, setMomo, card, setCard }) => {
   const total = subtotal + DELIVERY_FEE;
 
   const isMomo = method !== 'card';
@@ -249,7 +247,7 @@ const PaymentStep = ({ subtotal, onBack, onPay, paying }) => {
         </button>
         <button
           onClick={() => onPay(method)}
-          disabled={paying}
+          disabled={paying || (!isMomo && (!card.number || !card.expiry || !card.cvv)) || (isMomo && momo.length < 10)}
           className="flex-1 py-3 bg-[#F46B03] text-white font-bold rounded-xl hover:bg-[#C15300] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
           {paying ? 'Processing...' : `Pay ₵${total}`}
@@ -325,6 +323,7 @@ const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod })
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
+  const toast = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [paying, setPaying] = useState(false);
@@ -333,6 +332,9 @@ const CheckoutPage = () => {
   const [form, setForm] = useState({
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
   });
+  const [method, setMethod] = useState('mtn');
+  const [momo, setMomo] = useState('');
+  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
   const [waitingForApproval, setWaitingForApproval] = useState(false);
   const [pollingCount, setPollingCount] = useState(0);
 
@@ -415,6 +417,11 @@ const CheckoutPage = () => {
       const res = await api.post('/api/orders/', payload);
       const data = await res.json();
       
+      if (!res.ok) {
+        toast.error(data.detail || "Failed to create order. Please try again.");
+        return;
+      }
+
       if (data.id) {
         setOrderId(data.id);
         if (method !== 'card') {
@@ -425,6 +432,7 @@ const CheckoutPage = () => {
       }
     } catch (err) {
       console.error("Checkout error:", err);
+      toast.error("A network error occurred. Please check your connection.");
     } finally {
       setPaying(false);
     }
@@ -469,7 +477,20 @@ const CheckoutPage = () => {
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 lg:p-6 shadow-sm">
             {step === 0 && <DeliveryStep form={form} setForm={setForm} onNext={() => setStep(1)} />}
             {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
-            {step === 2 && <PaymentStep subtotal={subtotal} onBack={() => setStep(1)} onPay={handlePay} paying={paying} />}
+            {step === 2 && (
+              <PaymentStep 
+                subtotal={subtotal} 
+                onBack={() => setStep(1)} 
+                onPay={handlePay} 
+                paying={paying}
+                method={method}
+                setMethod={setMethod}
+                momo={momo}
+                setMomo={setMomo}
+                card={card}
+                setCard={setCard}
+              />
+            )}
             {step === 3 && <ConfirmationStep orderId={orderId} form={form} cartItems={cartItems} subtotal={subtotal} paymentMethod={paymentMethod} />}
           </div>
 
