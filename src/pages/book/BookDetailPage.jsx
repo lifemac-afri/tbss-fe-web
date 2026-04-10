@@ -1,3 +1,4 @@
+import api from '../../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Bookmark, ChevronRight, Star, Share2, RotateCcw, Truck, Shield } from 'lucide-react';
@@ -42,7 +43,7 @@ const BookDetailPage = () => {
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch(`/api/products/${id}/`)
+    api.get(`/api/products/${id}/`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

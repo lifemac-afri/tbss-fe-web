@@ -101,7 +101,7 @@ const CommunityPage = () => {
   const fetchClubs = () => {
     setLoading(true);
     setError('');
-    fetch('/api/book-clubs/')
+    api.get('/api/book-clubs/')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

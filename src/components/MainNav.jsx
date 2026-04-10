@@ -1,3 +1,4 @@
+import api from '../lib/api';
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Bookmark } from 'lucide-react';
@@ -50,7 +51,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
   }, []);
 
   useEffect(() => {
-    fetch('/api/genres/')
+    api.get('/api/genres/')
       .then(r => r.json())
       .then(data => {
         const list = Array.isArray(data) ? data : (data.results || []);
@@ -61,7 +62,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
 
   useEffect(() => {
     if (!hoveredGenre) { setSubGenres([]); return; }
-    fetch(`/api/sub-genres/?genre=${hoveredGenre.slug}`)
+    api.get(`/api/sub-genres/?genre=${hoveredGenre.slug}`)
       .then(r => r.json())
       .then(data => setSubGenres(Array.isArray(data) ? data : (data.results || [])))
       .catch(() => setSubGenres([]));

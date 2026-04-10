@@ -1,3 +1,4 @@
+import api from '../../lib/api';
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -61,7 +62,7 @@ const BlogArticlePage = () => {
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch(`/api/blog/${slug}/`)
+    api.get(`/api/blog/${slug}/`)
       .then((r) => {
         if (!r.ok) throw new Error(r.status === 404 ? 'not_found' : `HTTP ${r.status}`);
         return r.json();
