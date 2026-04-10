@@ -1,6 +1,6 @@
 const TOKEN_KEY = 'tbss_access_token';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+export const API_BASE = import.meta.env.VITE_API_URL || '';
 
 let _accessToken = sessionStorage.getItem(TOKEN_KEY) || null;
 let _refreshing = null;
