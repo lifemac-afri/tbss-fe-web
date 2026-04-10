@@ -28,7 +28,7 @@ const AccountSettingsPage = () => {
   const { currentUser } = useAuth();
 
   const [profile, setProfile] = useState({
-    name: currentUser?.name || '',
+    name: `${currentUser?.first_name || ''} ${currentUser?.last_name || ''}`.trim(),
     email: currentUser?.email || '',
     phone: '',
     city: 'Accra',
