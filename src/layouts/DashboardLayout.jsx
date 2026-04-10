@@ -92,7 +92,7 @@ const DashboardLayout = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-poppins">
+    <div className="flex min-h-screen bg-white font-poppins">
       <Sidebar />
 
       {/* Mobile Sidebar Overlay */}

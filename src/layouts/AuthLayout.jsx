@@ -4,7 +4,7 @@ import logo from '../assets/logo/logo.png';
 
 const AuthLayout = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-poppins">
+    <div className="min-h-screen bg-white flex flex-col font-poppins">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 py-4 px-6">
         <Link to="/" className="inline-block">
