@@ -51,6 +51,7 @@ import BlogAdminPage from './pages/admin/BlogAdminPage';
 import ReadingPlansAdminPage from './pages/admin/ReadingPlansAdminPage';
 import BookClubsAdminPage from './pages/admin/BookClubsAdminPage';
 import SectionsAdminPage from './pages/admin/SectionsAdminPage';
+import ReviewsAdminPage from './pages/admin/ReviewsAdminPage';
 import DealsAdminPage from './pages/admin/DealsAdminPage';
 import NewsletterAdminPage from './pages/admin/NewsletterAdminPage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
@@ -129,6 +130,7 @@ function App() {
                     >
                       <Route index element={<AdminOverviewPage />} />
                       <Route path="products" element={<ProductsAdminPage />} />
+                      <Route path="reviews" element={<ReviewsAdminPage />} />
                       <Route path="categories" element={<CategoriesAdminPage />} />
                       <Route path="orders" element={<OrdersAdminPage />} />
                       <Route path="users" element={<UsersAdminPage />} />
