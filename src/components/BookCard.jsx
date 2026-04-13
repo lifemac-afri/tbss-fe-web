@@ -50,11 +50,22 @@ const BookCard = ({
 
   return (
     <div
-      className="group w-full max-w-[260px] bg-white rounded-xl border border-gray-100 p-3 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+      className="group relative w-full max-w-[260px] bg-white rounded-xl border border-gray-100 p-3 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={goToDetail}
     >
+      {/* Discount ribbon — positioned relative to the entire card */}
+      {(discount || (oldPrice && parseFloat(oldPrice) > parseFloat(price))) && (
+        <div className="absolute top-0 left-0 w-16 h-16 overflow-hidden z-30 pointer-events-none">
+          <div className="absolute top-[10px] left-[-22px] w-[80px] bg-[#E11D48] text-white text-[10px] font-bold py-0.5 text-center -rotate-45 shadow-sm">
+            {discount || (() => {
+              const pct = Math.round((parseFloat(oldPrice) - parseFloat(price)) / parseFloat(oldPrice) * 100);
+              return `${pct}% OFF`;
+            })()}
+          </div>
+        </div>
+      )}
       <div className="relative aspect-[3/4.2] rounded-xl overflow-hidden mb-3 bg-gray-50">
         <img
           src={coverImage}
@@ -63,17 +74,6 @@ const BookCard = ({
           loading="lazy"
         />
 
-        {/* Discount ribbon — auto-shown when oldPrice > price */}
-        {(discount || (oldPrice && parseFloat(oldPrice) > parseFloat(price))) && (
-          <div className="absolute top-0 left-0 w-16 h-16 overflow-hidden z-10 pointer-events-none">
-            <div className="absolute top-[10px] left-[-22px] w-[80px] bg-[#E11D48] text-white text-[10px] font-bold py-0.5 text-center -rotate-45 shadow-sm">
-              {discount || (() => {
-                const pct = Math.round((parseFloat(oldPrice) - parseFloat(price)) / parseFloat(oldPrice) * 100);
-                return `${pct}% OFF`;
-              })()}
-            </div>
-          </div>
-        )}
 
         {/* Out of stock overlay */}
         {stockStatus === 'Out of stock' && (
