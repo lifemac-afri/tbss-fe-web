@@ -66,12 +66,12 @@ const DualRangeSlider = ({ min, max, step, value, onChange }) => {
       />
       <input type="range" min={min} max={max} step={step} value={minVal}
         onChange={(e) => { const v = Math.min(Number(e.target.value), maxVal - step); onChange([v, maxVal]); }}
-        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange"
-        style={{ zIndex: minVal >= maxVal - step * 2 ? 5 : 3 }}
+        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange pointer-events-none"
+        style={{ zIndex: minVal > max / 2 ? 5 : 3 }}
       />
       <input type="range" min={min} max={max} step={step} value={maxVal}
         onChange={(e) => { const v = Math.max(Number(e.target.value), minVal + step); onChange([minVal, v]); }}
-        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange"
+        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange pointer-events-none"
         style={{ zIndex: 4 }}
       />
     </div>
@@ -339,11 +339,13 @@ const ShopPage = () => {
           -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
           background: #F46B03; cursor: pointer; border: 2px solid white;
           box-shadow: 0 1px 4px rgba(244,107,3,0.4);
+          pointer-events: auto;
         }
         .range-thumb-orange::-moz-range-thumb {
           width: 18px; height: 18px; border-radius: 50%;
           background: #F46B03; cursor: pointer; border: 2px solid white;
           box-shadow: 0 1px 4px rgba(244,107,3,0.4);
+          pointer-events: auto;
         }
         .sidebar-scroll::-webkit-scrollbar { width: 0; }
         .sidebar-scroll { scrollbar-width: none; }
