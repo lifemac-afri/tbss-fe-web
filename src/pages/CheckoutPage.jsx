@@ -210,7 +210,7 @@ const DeliveryStep = ({ form, setForm, onNext, addresses, selectedAddressId, set
   );
 };
 
-const ReviewStep = ({ form, cartItems, subtotal, onBack, onNext }) => (
+const ReviewStep = ({ form, cartItems, subtotal, onBack, onPay, paying }) => (
   <div className="space-y-5">
     <div className="flex items-center gap-2 mb-2">
       <ShoppingBag size={18} className="text-[#F46B03]" />
@@ -252,82 +252,16 @@ const ReviewStep = ({ form, cartItems, subtotal, onBack, onNext }) => (
     </div>
 
     <div className="flex gap-3">
-      <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-3 border border-gray-200 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors">
+      <button onClick={onBack} disabled={paying} className="flex items-center gap-1.5 px-4 py-3 border border-gray-200 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50">
         <ArrowLeft size={16} /> Back
       </button>
-      <button onClick={onNext} className="flex-1 py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2">
-        Continue to Payment <ChevronRight size={18} />
+      <button onClick={onPay} disabled={paying} className="flex-1 py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+        {paying ? 'Processing...' : `Pay Now ₵${subtotal + DELIVERY_FEE}`} <ChevronRight size={18} />
       </button>
     </div>
   </div>
 );
 
-const PAYMENT_METHODS = [
-  { id: 'mtn', label: 'MTN Mobile Money', hint: 'Enter your MTN MoMo number', color: 'bg-yellow-400' },
-  { id: 'vodafone', label: 'Vodafone Cash', hint: 'Enter your Vodafone Cash number', color: 'bg-red-500' },
-  { id: 'airteltigo', label: 'AirtelTigo Money', hint: 'Enter your AirtelTigo number', color: 'bg-blue-500' },
-  { id: 'card', label: 'Visa / Mastercard', hint: 'Card details', color: 'bg-gray-800' },
-];
-
-const PaymentStep = ({ subtotal, onBack, onPay, paying, method, setMethod, momo, setMomo, card, setCard }) => {
-  const total = subtotal + DELIVERY_FEE;
-
-  const isMomo = method !== 'card';
-
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2 mb-2">
-        <CreditCard size={18} className="text-[#F46B03]" />
-        <h2 className="font-bold text-gray-900">Payment</h2>
-      </div>
-
-      <div className="space-y-2">
-        {PAYMENT_METHODS.map((m) => (
-          <label key={m.id} className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-            method === m.id ? 'border-[#F46B03] bg-orange-50/40' : 'border-gray-200 hover:border-gray-300'
-          }`}>
-            <input type="radio" name="pay" value={m.id} checked={method === m.id} onChange={() => setMethod(m.id)} className="accent-[#F46B03]" />
-            <span className={`w-3 h-3 rounded-full ${m.color} flex-shrink-0`} />
-            <span className="text-sm font-medium text-gray-800">{m.label}</span>
-          </label>
-        ))}
-      </div>
-
-      {isMomo ? (
-        <Field label={PAYMENT_METHODS.find((m) => m.id === method)?.hint}>
-          <input className={inputCls} placeholder="0244 000 000" value={momo} onChange={(e) => setMomo(e.target.value)} />
-        </Field>
-      ) : (
-        <div className="space-y-3">
-          <Field label="Card Number">
-            <input className={inputCls} placeholder="4111 1111 1111 1111" maxLength={19}
-              value={card.number} onChange={(e) => setCard((c) => ({ ...c, number: e.target.value }))} />
-          </Field>
-          <Field label="Name on Card">
-            <input className={inputCls} placeholder="Kwame Mensah" value={card.name} onChange={(e) => setCard((c) => ({ ...c, name: e.target.value }))} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Expiry"><input className={inputCls} placeholder="MM/YY" maxLength={5} value={card.expiry} onChange={(e) => setCard((c) => ({ ...c, expiry: e.target.value }))} /></Field>
-            <Field label="CVV"><input className={inputCls} placeholder="123" maxLength={4} value={card.cvv} onChange={(e) => setCard((c) => ({ ...c, cvv: e.target.value }))} /></Field>
-          </div>
-        </div>
-      )}
-
-      <div className="flex gap-3">
-        <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-3 border border-gray-200 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors">
-          <ArrowLeft size={16} /> Back
-        </button>
-        <button
-          onClick={() => onPay(method)}
-          disabled={paying || (!isMomo && (!card.number || !card.expiry || !card.cvv)) || (isMomo && momo.length < 10)}
-          className="flex-1 py-3 bg-[#F46B03] text-white font-bold rounded-xl hover:bg-[#C15300] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          {paying ? 'Processing...' : `Pay ₵${total}`}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod }) => {
   const navigate = useNavigate();
@@ -409,12 +343,7 @@ const CheckoutPage = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
-  
-  const [method, setMethod] = useState('mtn');
-  const [momo, setMomo] = useState('');
-  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
-  const [waitingForApproval, setWaitingForApproval] = useState(false);
-  const [pollingCount, setPollingCount] = useState(0);
+  const [waitForPayment, setWaitForPayment] = useState(false);
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -447,68 +376,18 @@ const CheckoutPage = () => {
     }
   }, [user]);
 
-  const startPolling = (id) => {
-    setWaitingForApproval(true);
-    setPollingCount(0);
-    
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get(`/api/orders/${id}/status/`);
-        const data = await res.json();
-        
-        if (data.status === 'paid') {
-          clearInterval(interval);
-          setOrderId(id);
-          clearCart();
-          setWaitingForApproval(false);
-          setStep(3);
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-      
-      setPollingCount(prev => {
-        if (prev >= 20) { // 60 seconds (20 * 3s)
-          clearInterval(interval);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 3000);
-    
-    return interval;
-  };
 
-  const manualCheck = async () => {
-    if (!orderId) return;
-    try {
-      const res = await api.post(`/api/orders/${orderId}/check-payment/`);
-      const data = await res.json();
-      if (data.status === 'paid') {
-        clearCart();
-        setWaitingForApproval(false);
-        setStep(3);
-      }
-    } catch (err) {
-      console.error("Manual check error:", err);
-    }
-  };
-
-  const handlePay = async (method) => {
-    const labels = { mtn: 'MTN Mobile Money', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo Money', card: 'Visa/Mastercard' };
+  const handlePay = async () => {
     setPaying(true);
-    setPaymentMethod(labels[method] || method);
 
     const payload = {
       customer_details: {
         name: form.name,
-        phone: form.phone, // Delivery phone
+        phone: form.phone,
         street: form.street,
         city: form.city,
         region: form.region,
         note: form.note,
-        payment_method: method,
-        payment_phone: method === 'card' ? '' : momo, // Payment phone from PaymentStep
       },
       shipping_address: {
         name: form.name,
@@ -528,7 +407,7 @@ const CheckoutPage = () => {
           street_address: form.street,
           city: form.city,
           state_province: form.region,
-          postal_code: '0000', // Default
+          postal_code: '0000',
           country: 'Ghana',
           is_default: addresses.length === 0,
         });
@@ -540,43 +419,30 @@ const CheckoutPage = () => {
 
       if (!res.ok) {
         toast.error(data.detail || "Failed to create order. Please try again.");
+        setPaying(false);
         return;
       }
 
-      if (data.id) {
-        setOrderId(data.id);
+      if (data.order && data.order.id) {
+        setOrderId(data.order.id);
 
-        // Use the Hubtel Checkout SDK for all payment methods
         const checkout = new CheckoutSdk();
 
-        const purchaseInfo = {
-          amount: subtotal + DELIVERY_FEE,
-          purchaseDescription: `Payment for Order #${data.id} on TBSS`,
-          customerPhoneNumber: form.phone,
-          clientReference: data.id,
-        };
-
-        const config = {
-          branding: "enabled",
-          callbackUrl: data.payment_config?.callbackUrl || "https://api-staging.tbssgh.com/api/orders/webhooks/payment/",
-          merchantAccount: data.payment_config?.merchantAccount,
-          basicAuth: data.payment_config?.basicAuth,
-        };
-
         checkout.openModal({
-          purchaseInfo,
-          config,
+          purchaseInfo: data.purchaseInfo,
+          config: data.config,
           callBacks: {
             onInit: () => console.log('Hubtel Checkout initialized'),
             onPaymentSuccess: (paymentData) => {
               console.log('Payment Success', paymentData);
-              setOrderId(data.id);
+              // Mark flow complete
               clearCart();
-              setStep(3);
+              setStep(2);
+              setPaying(false);
             },
             onPaymentFailure: (paymentData) => {
               console.log('Payment Failure', paymentData);
-              toast.error("Payment failed. Please try again.");
+              toast.error("Payment failed or cancelled.");
             },
             onClose: () => {
               setPaying(false);
@@ -587,12 +453,11 @@ const CheckoutPage = () => {
     } catch (err) {
       console.error("Checkout error:", err);
       toast.error("A network error occurred. Please check your connection.");
-    } finally {
       setPaying(false);
     }
   };
 
-  if (cartItems.length === 0 && step < 3) {
+  if (cartItems.length === 0 && step < 2) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
@@ -641,69 +506,18 @@ const CheckoutPage = () => {
                 setIsAddingNew={setIsAddingNew}
               />
             )}
-            {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
-            {step === 2 && (
-              <PaymentStep 
-                subtotal={subtotal} 
-                onBack={() => setStep(1)} 
-                onPay={handlePay} 
-                paying={paying}
-                method={method}
-                setMethod={setMethod}
-                momo={momo}
-                setMomo={setMomo}
-                card={card}
-                setCard={setCard}
-              />
-            )}
-            {step === 3 && <ConfirmationStep orderId={orderId} form={form} cartItems={cartItems} subtotal={subtotal} paymentMethod={paymentMethod} />}
+            {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onPay={handlePay} paying={paying} />}
+            {step === 2 && <ConfirmationStep orderId={orderId} form={form} cartItems={cartItems} subtotal={subtotal} paymentMethod="Hubtel Checkout" />}
           </div>
 
           {/* Summary sidebar — hidden on confirmation */}
-          {step < 3 && (
+          {step < 2 && (
             <div className="lg:col-span-1">
               <OrderSummaryPanel cartItems={cartItems} subtotal={subtotal} />
             </div>
           )}
         </div>
       </div>
-
-      {/* Waiting for Approval Overlay */}
-      {waitingForApproval && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in fade-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div className="w-10 h-10 border-4 border-[#F46B03] border-t-transparent rounded-full animate-spin" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Payment</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              A USSD prompt has been sent to your phone. Please enter your PIN to authorize the transaction.
-            </p>
-            
-            <div className="space-y-3">
-              <button 
-                onClick={manualCheck}
-                className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors"
-              >
-                I've made the payment
-              </button>
-              
-              {pollingCount >= 20 ? (
-                <button 
-                  onClick={() => setWaitingForApproval(false)}
-                  className="w-full py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Close & Check Orders Later
-                </button>
-              ) : (
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
-                  Waiting... {60 - (pollingCount * 3)}s
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
