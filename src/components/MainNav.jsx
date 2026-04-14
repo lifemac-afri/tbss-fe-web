@@ -283,7 +283,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="nav:hidden p-2 text-gray-600 hover:text-[#F46B03] transition-colors shadow-sm bg-gray-50 rounded-lg"
+              className="lg:hidden p-2 text-gray-600 hover:text-[#F46B03] transition-colors shadow-sm bg-gray-50 rounded-lg"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -294,7 +294,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="nav:hidden fixed inset-0 z-50 flex overflow-hidden">
+        <div className="lg:hidden fixed inset-0 z-50 flex overflow-hidden">
           <div className="w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col pt-8 overflow-y-auto animate-in slide-in-from-left duration-300">
             <div className="flex items-center justify-between px-6 mb-8">
               <img src={logo} alt="TBSS Logo" className="h-9 w-auto" />
