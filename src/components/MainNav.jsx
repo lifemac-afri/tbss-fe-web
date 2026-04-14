@@ -1,7 +1,12 @@
 import api from '../lib/api';
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, Bookmark } from 'lucide-react';
+import { 
+  Menu, X, ChevronDown, Bookmark, 
+  LayoutGrid, Star, Gamepad2, PenTool, 
+  BookOpen, Users, LogIn, UserPlus, 
+  LogOut, Settings, LayoutDashboard 
+} from 'lucide-react';
 import logo from '../assets/logo/logo.png';
 import cartIcon from '../assets/icons/cart.svg';
 import Button from './Button';
@@ -10,6 +15,15 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 
 export const navItems = ['Genre', 'Bestsellers', 'Games', 'Stationeries', 'Blogs', 'Community'];
+
+const navItemIcons = {
+  Genre: LayoutGrid,
+  Bestsellers: Star,
+  Games: Gamepad2,
+  Stationeries: PenTool,
+  Blogs: BookOpen,
+  Community: Users,
+};
 
 const navRoutes = {
   Bestsellers: '/bestsellers',
@@ -104,7 +118,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
           </div>
 
           {/* Nav items — centred, desktop only */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
             {navItems.map((item) => {
               if (item === 'Genre') {
                 return (
@@ -184,7 +198,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
 
             {/* ── Cart ──────────────────────────────────────── */}
             {/* Mobile: link to page */}
-            <Link to="/cart" className="md:hidden relative p-1 hover:opacity-70 transition-opacity" aria-label="Cart">
+            <Link to="/cart" className="lg:hidden relative p-1 hover:opacity-70 transition-opacity" aria-label="Cart">
               <img src={cartIcon} alt="Cart" className="w-6 h-6" />
               {cartCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F46B03] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -193,7 +207,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
               )}
             </Link>
             {/* Desktop: open drawer */}
-            <button onClick={openCart} className="hidden md:flex relative p-1 hover:opacity-70 transition-opacity" aria-label="Cart">
+            <button onClick={openCart} className="hidden lg:flex relative p-1 hover:opacity-70 transition-opacity" aria-label="Cart">
               <img src={cartIcon} alt="Cart" className="w-6 h-6" />
               {cartCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F46B03] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -204,7 +218,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
 
             {/* ── Wishlist ───────────────────────────────────── */}
             {/* Mobile: link to page */}
-            <Link to="/wishlist" className="md:hidden relative p-1 hover:opacity-70 transition-opacity" aria-label="Wishlist">
+            <Link to="/wishlist" className="lg:hidden relative p-1 hover:opacity-70 transition-opacity" aria-label="Wishlist">
               <Bookmark size={22} className={isAuthenticated && wishlistCount > 0 ? 'text-[#F46B03] fill-[#F46B03]' : 'text-gray-600'} />
               {isAuthenticated && wishlistCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F46B03] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -213,7 +227,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
               )}
             </Link>
             {/* Desktop: open drawer */}
-            <button onClick={openWishlist} className="hidden md:flex relative p-1 hover:opacity-70 transition-opacity" aria-label="Wishlist">
+            <button onClick={openWishlist} className="hidden lg:flex relative p-1 hover:opacity-70 transition-opacity" aria-label="Wishlist">
               <Bookmark size={22} className={isAuthenticated && wishlistCount > 0 ? 'text-[#F46B03] fill-[#F46B03]' : 'text-gray-600'} />
               {isAuthenticated && wishlistCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#F46B03] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -225,7 +239,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
             {/* ── Auth area ─────────────────────────────────── */}
             {isAuthenticated ? (
               /* Logged in — avatar + greeting + dropdown */
-              <div className="hidden md:flex items-center gap-2.5 relative" ref={profileRef}>
+              <div className="hidden lg:flex items-center gap-2.5 relative" ref={profileRef}>
                 {console.log(currentUser)}
                 {/* Greeting */}
                 <div className="text-right leading-none">
@@ -239,7 +253,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
                   className="w-9 h-9 rounded-full bg-[#F46B03] text-white text-sm font-bold hover:opacity-80 transition-opacity flex items-center justify-center shadow-sm"
                   aria-label="Account"
                 >
-                  { (currentUser?.first_name?.[0] || 'U').toUpperCase() + (currentUser?.last_name?.[0] || '').toUpperCase() }
+                  {(currentUser?.first_name?.[0] || 'U').toUpperCase() + (currentUser?.last_name?.[0] || '').toUpperCase()}
                 </button>
 
                 {/* Dropdown */}
@@ -261,7 +275,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
               </div>
             ) : (
               /* Not logged in — Sign In button only */
-              <Link to="/login" className="hidden md:block">
+              <Link to="/login" className="hidden lg:block">
                 <Button variant="solid" size="sm" className="rounded-full px-5">Sign In</Button>
               </Link>
             )}
@@ -269,7 +283,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-gray-600 hover:text-[#F46B03] transition-colors"
+              className="lg:hidden p-2 text-gray-600 hover:text-[#F46B03] transition-colors shadow-sm bg-gray-50 rounded-lg"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -280,52 +294,67 @@ const MainNav = ({ activeItem, onItemClick }) => {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="w-72 max-w-[85vw] bg-white h-full shadow-xl flex flex-col pt-6 overflow-y-auto">
-            <div className="flex items-center justify-between px-5 mb-6">
-              <img src={logo} alt="TBSS Logo" className="h-8 w-auto" />
-              <button onClick={() => setMobileOpen(false)} className="p-1 text-gray-500"><X size={22} /></button>
+        <div className="lg:hidden fixed inset-0 z-50 flex overflow-hidden">
+          <div className="w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col pt-8 overflow-y-auto animate-in slide-in-from-left duration-300">
+            <div className="flex items-center justify-between px-6 mb-8">
+              <img src={logo} alt="TBSS Logo" className="h-9 w-auto" />
+              <button 
+                onClick={() => setMobileOpen(false)} 
+                className="p-2.5 rounded-full bg-gray-50 text-gray-500 hover:text-[#F46B03] hover:bg-orange-50 transition-all border border-gray-100"
+                aria-label="Close menu"
+              >
+                <X size={20} />
+              </button>
             </div>
 
             {/* User info if logged in */}
             {isAuthenticated && (
-              <div className="mx-5 mb-4 p-3.5 bg-orange-50 rounded-2xl flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F46B03] text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
-                  {currentUser?.name?.[0]?.toUpperCase() || 'U'}
+              <div className="mx-6 mb-8 p-4 bg-gradient-to-br from-orange-50 to-white rounded-3xl flex items-center gap-4 border border-orange-100 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-[#F46B03] text-white font-bold text-base flex items-center justify-center flex-shrink-0 shadow-lg shadow-orange-200">
+                  {currentUser?.first_name?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] text-orange-400 font-medium">{getGreeting()}</p>
-                  <p className="text-sm font-bold text-gray-900 truncate">{currentUser?.name}</p>
+                  <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider mb-0.5">{getGreeting()}</p>
+                  <p className="text-base font-bold text-gray-900 truncate font-poppins">{firstName}</p>
                 </div>
               </div>
             )}
 
-            <nav className="flex-1 px-5">
+            <nav className="flex-1 px-6 space-y-1">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 px-1">Navigation Menu</p>
               {navItems.map((item) => {
+                const Icon = navItemIcons[item];
+                const isActive = activeItem === item;
                 if (item === 'Genre') {
+                  const isGenreActive = mobileGenreOpen || isActive;
                   return (
-                    <div key="Genre">
+                    <div key="Genre" className="mb-1">
                       <button
                         onClick={() => setMobileGenreOpen((p) => !p)}
-                        className="w-full flex items-center justify-between py-3 text-base font-bold border-b border-gray-100 text-gray-800 hover:text-[#F46B03] transition-colors"
+                        className={`w-full flex items-center justify-between py-3.5 px-4 rounded-2xl text-base font-bold transition-all
+                          ${isGenreActive ? 'bg-orange-50 text-[#F46B03]' : 'text-gray-700 hover:bg-gray-50'}`}
                       >
-                        Genre
-                        <ChevronDown size={16} className={`transition-transform duration-200 ${mobileGenreOpen ? 'rotate-180' : ''}`} />
+                        <div className="flex items-center gap-3">
+                          {Icon && <Icon size={20} className={isGenreActive ? 'text-[#F46B03]' : 'text-gray-400'} />}
+                          <span className="font-poppins">{item}</span>
+                        </div>
+                        <ChevronDown size={18} className={`transition-transform duration-300 ${mobileGenreOpen ? 'rotate-180' : ''} opacity-40`} />
                       </button>
                       {mobileGenreOpen && (
-                        <div className="py-2 border-b border-gray-100 space-y-0.5">
+                        <div className="mt-1 ml-4 pl-7 border-l-2 border-orange-50 py-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
                           <button
                             onClick={() => { handleGenreSelect(null); setMobileOpen(false); }}
-                            className="w-full text-left px-2 py-2 text-sm text-gray-600 font-medium hover:text-[#F46B03] transition-colors"
+                            className="w-full text-left py-2.5 text-sm text-gray-500 font-medium hover:text-[#F46B03] transition-colors font-poppins"
                           >
-                            All Books
+                            All Categories
                           </button>
                           {genres.map((g) => (
                             <button
                               key={g.slug}
                               onClick={() => { handleGenreSelect(g.slug); setMobileOpen(false); }}
-                              className="w-full text-left px-2 py-2 text-sm font-medium text-gray-700 hover:text-[#F46B03] transition-colors"
+                              className="w-full text-left py-2.5 text-sm font-medium text-gray-600 hover:text-[#F46B03] transition-colors font-poppins flex items-center gap-2"
                             >
+                              <span className="w-1 h-1 rounded-full bg-gray-200" />
                               {g.name}
                             </button>
                           ))}
@@ -338,38 +367,55 @@ const MainNav = ({ activeItem, onItemClick }) => {
                   <button
                     key={item}
                     onClick={() => { handleNavClick(item); setMobileOpen(false); }}
-                    className={`w-full text-left py-3 text-base font-bold border-b border-gray-100 transition-colors
-                      ${activeItem === item ? 'text-[#F46B03]' : 'text-gray-800 hover:text-[#F46B03]'}`}
+                    className={`w-full flex items-center gap-3 py-3.5 px-4 rounded-2xl text-base font-bold transition-all font-poppins
+                      ${isActive ? 'bg-orange-50 text-[#F46B03]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#F46B03]'}`}
                   >
+                    {Icon && <Icon size={20} className={isActive ? 'text-[#F46B03]' : 'text-gray-400'} />}
                     {item}
                   </button>
                 );
               })}
             </nav>
 
-            <div className="px-5 pb-8 pt-4 border-t border-gray-100 space-y-2">
+            {/* Auth Section */}
+            <div className="px-6 pb-12 pt-6 border-t border-gray-100 flex flex-col gap-4">
               {isAuthenticated ? (
                 <>
                   <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                    <Button variant="solid" className="w-full rounded-full">Dashboard</Button>
+                    <Button variant="solid" className="w-full rounded-2xl p-6 shadow-xl shadow-orange-100 flex items-center justify-center gap-3 font-bold group">
+                      <LayoutDashboard size={20} className="group-hover:scale-110 transition-transform" />
+                      My Dashboard
+                    </Button>
                   </Link>
-                  <button onClick={() => { logout(); setMobileOpen(false); }} className="w-full text-sm text-red-600 hover:underline py-2">
-                    Sign Out
+                  <button 
+                    onClick={() => { logout(); setMobileOpen(false); }} 
+                    className="w-full flex items-center justify-center gap-2.5 py-4 text-sm font-bold text-red-500 hover:bg-red-50 rounded-2xl transition-all border border-transparent hover:border-red-100"
+                  >
+                    <LogOut size={18} />
+                    Sign Out Account
                   </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setMobileOpen(false)}>
-                    <Button variant="solid" className="w-full rounded-full">Sign In</Button>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 px-1">My Account</p>
+                  <Link to="/login" onClick={() => setMobileOpen(false)} className="w-full">
+                    <Button variant="solid" className="w-full rounded-2xl p-6 shadow-xl shadow-orange-100 flex items-center justify-center gap-3 font-bold group">
+                      <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
+                      Sign In
+                    </Button>
                   </Link>
-                  <Link to="/register" onClick={() => setMobileOpen(false)}>
-                    <Button variant="outline" className="w-full rounded-full">Create Account</Button>
+                  <Link to="/register" onClick={() => setMobileOpen(false)} className="w-full">
+                    <Button variant="outline" className="w-full rounded-2xl p-6 border-2 border-gray-100 hover:border-[#F46B03] hover:text-[#F46B03] flex items-center justify-center gap-3 font-bold transition-all bg-white">
+                      <UserPlus size={20} />
+                      Create Account
+                    </Button>
                   </Link>
                 </>
               )}
             </div>
           </div>
-          <div className="flex-1 bg-black/40" onClick={() => setMobileOpen(false)} />
+          {/* Backdrop */}
+          <div className="flex-1 bg-black/60 backdrop-blur-[4px] animate-in fade-in duration-300" onClick={() => setMobileOpen(false)} />
         </div>
       )}
     </nav>

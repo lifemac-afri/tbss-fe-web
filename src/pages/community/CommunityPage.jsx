@@ -128,7 +128,7 @@ const CommunityPage = () => {
         <meta name="description" content="Join a book club community at TBSS. Read together, discuss, and grow." />
       </Helmet>
 
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-white min-h-screen">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
           {/* Header */}

@@ -5,16 +5,16 @@ import Button from './Button';
 
 const Hero = () => {
   return (
-    <div className="flex flex-col md:flex-row items-center justify-evenly gap-10 md:gap-20 pb-10">
-      <div className="text-left max-w-xl">
-        <h1 className="text-5xl md:text-6xl font-aclonica leading-[1.1] tracking-tight text-black">
-          <span className="whitespace-nowrap">Discover Your Next</span>
+    <div className="flex flex-col md:flex-row items-center justify-center min-h-[300px] md:min-h-[440px] gap-8 md:gap-10 lg:gap-20 py-8 md:py-10">
+      <div className="text-center md:text-left max-w-xl lg:max-w-2xl px-4 md:px-0">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-aclonica leading-tight tracking-tight text-black">
+          <span className='whitespace-nowrap'>Discover Your Next</span>
           <span className="block text-[#F46B03]">Favourite Book.</span>
         </h1>
-        <p className="text-sm md:text-base font-poppins text-gray-500 font-light max-w-md mt-3 mb-6">
+        <p className="text-xs sm:text-sm md:text-base lg:text-lg font-poppins text-gray-500 font-light mt-4 mb-8 mx-auto md:mx-0 leading-relaxed max-w-lg lg:max-w-xl">
           Build your personal library, one great book at a time. Browse thousands of titles across every genre.
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap justify-center md:justify-start items-center gap-4">
           <Link to="/shop">
             <Button variant="solid" size="lg" className="rounded-full px-8">
               Shop Now
@@ -27,11 +27,11 @@ const Hero = () => {
           </Link>
         </div>
       </div>
-      <div className="flex justify-center">
+      <div className="flex justify-center flex-shrink-0 w-full md:w-auto px-6 md:px-0">
         <img
           src={heroImage}
           alt="Hero Books"
-          className="w-auto h-auto max-h-[340px] md:max-h-[500px] object-contain drop-shadow-2xl"
+          className="w-full max-w-[260px] sm:max-w-[300px] md:max-w-[320px] lg:max-w-none lg:h-auto lg:max-h-[500px] object-contain drop-shadow-2xl"
         />
       </div>
     </div>

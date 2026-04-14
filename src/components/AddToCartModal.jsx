@@ -78,11 +78,6 @@ const AddToCartModal = () => {
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>
             <div className="flex items-center gap-2 mt-1.5">
-              <img
-                src={book.tag === 'Hardcover' ? hardcoverIcon : paperbackIcon}
-                alt={book.tag}
-                className="h-3.5 w-auto"
-              />
               <span className="text-xs text-gray-400">{book.tag}</span>
               {book.discount && (
                 <span className="text-[10px] font-bold text-[#E11D48] bg-red-50 px-1.5 py-0.5 rounded">

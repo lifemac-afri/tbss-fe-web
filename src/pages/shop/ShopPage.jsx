@@ -66,12 +66,12 @@ const DualRangeSlider = ({ min, max, step, value, onChange }) => {
       />
       <input type="range" min={min} max={max} step={step} value={minVal}
         onChange={(e) => { const v = Math.min(Number(e.target.value), maxVal - step); onChange([v, maxVal]); }}
-        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange"
-        style={{ zIndex: minVal >= maxVal - step * 2 ? 5 : 3 }}
+        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange pointer-events-none"
+        style={{ zIndex: minVal > max / 2 ? 5 : 3 }}
       />
       <input type="range" min={min} max={max} step={step} value={maxVal}
         onChange={(e) => { const v = Math.max(Number(e.target.value), minVal + step); onChange([minVal, v]); }}
-        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange"
+        className="absolute w-full h-[3px] appearance-none bg-transparent cursor-pointer range-thumb-orange pointer-events-none"
         style={{ zIndex: 4 }}
       />
     </div>
@@ -339,17 +339,19 @@ const ShopPage = () => {
           -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
           background: #F46B03; cursor: pointer; border: 2px solid white;
           box-shadow: 0 1px 4px rgba(244,107,3,0.4);
+          pointer-events: auto;
         }
         .range-thumb-orange::-moz-range-thumb {
           width: 18px; height: 18px; border-radius: 50%;
           background: #F46B03; cursor: pointer; border: 2px solid white;
           box-shadow: 0 1px 4px rgba(244,107,3,0.4);
+          pointer-events: auto;
         }
         .sidebar-scroll::-webkit-scrollbar { width: 0; }
         .sidebar-scroll { scrollbar-width: none; }
       `}</style>
 
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-white min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
           {/* Breadcrumb */}
@@ -370,7 +372,7 @@ const ShopPage = () => {
           <div className="flex gap-6 items-start">
             {/* Sidebar — Desktop */}
             <aside className="hidden lg:block w-60 flex-shrink-0 sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto sidebar-scroll">
-              <div className="sticky top-0 z-10 bg-gray-50 pb-3">
+              <div className="sticky top-0 z-10 bg-white pb-3">
                 <button
                   onClick={() => setFiltersOpen(false)}
                   className="w-full bg-[#F46B03] hover:bg-[#C15300] transition-colors text-white font-bold text-base py-3.5 px-5 rounded-xl text-center shadow-sm"
@@ -658,7 +660,7 @@ const ShopPage = () => {
       {filtersOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setFiltersOpen(false)} />
-          <div className="relative ml-auto w-80 max-w-full h-full bg-gray-50 overflow-y-auto shadow-2xl p-4">
+          <div className="relative ml-auto w-80 max-w-full h-full bg-white overflow-y-auto shadow-2xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-gray-900 text-base">Filters</h3>
               <button onClick={() => setFiltersOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
@@ -666,7 +668,7 @@ const ShopPage = () => {
               </button>
             </div>
             <FilterSidebar {...sidebarProps} />
-            <div className="sticky bottom-0 bg-gray-50 pt-3 pb-2">
+            <div className="sticky bottom-0 bg-white pt-3 pb-2">
               <button onClick={() => setFiltersOpen(false)}
                 className="w-full bg-[#F46B03] hover:bg-[#C15300] text-white font-bold py-3 rounded-xl transition-colors">
                 Show results

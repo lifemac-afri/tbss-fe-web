@@ -9,7 +9,7 @@ import CookieConsentBanner from '../components/CookieConsentBanner';
 
 const MainLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 font-poppins">
+    <div className="min-h-screen flex flex-col bg-white font-poppins overflow-x-hidden">
       <MainNav />
       <main className="flex-1">
         <Outlet />
