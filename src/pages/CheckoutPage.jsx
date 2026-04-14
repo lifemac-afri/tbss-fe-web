@@ -6,7 +6,7 @@ import { useToast } from '../components/Toast';
 import logo from '../assets/logo/logo.png';
 import api from '../lib/api';
 
-const DELIVERY_FEE = 15;
+const DELIVERY_FEE = 00;
 const STEPS = ['Delivery', 'Review', 'Payment', 'Done'];
 
 const regions = ['Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta', 'Northern', 'Upper East', 'Upper West', 'Bono', 'Ahafo', 'Bono East', 'Oti', 'Savannah', 'North East', 'Western North'];
