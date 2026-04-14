@@ -40,6 +40,7 @@ import WishlistDashPage from './pages/dashboard/WishlistDashPage';
 import BookClubsDashPage from './pages/dashboard/BookClubsDashPage';
 import ReadingPlansDashPage from './pages/dashboard/ReadingPlansDashPage';
 import NotificationsPage from './pages/dashboard/NotificationsPage';
+import AddressesPage from './pages/dashboard/AddressesPage';
 import AccountSettingsPage from './pages/dashboard/AccountSettingsPage';
 
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
@@ -114,6 +115,7 @@ function App() {
                       <Route path="book-clubs" element={<BookClubsDashPage />} />
                       <Route path="reading-plans" element={<ReadingPlansDashPage />} />
                       <Route path="notifications" element={<NotificationsPage />} />
+                      <Route path="addresses" element={<AddressesPage />} />
                       <Route path="account" element={<AccountSettingsPage />} />
                     </Route>
 
