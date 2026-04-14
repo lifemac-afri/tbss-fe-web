@@ -57,19 +57,19 @@ const NewsletterSection = () => {
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="flex items-stretch rounded-xl overflow-hidden w-full shadow-sm">
+            <div className="relative flex items-center w-full">
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Your email address"
                 required
-                className="flex-1 px-6 py-4 text-sm font-poppins text-gray-700 bg-[#F5CBA8] outline-none border-none"
+                className="w-full pl-6 pr-[120px] sm:pr-[140px] py-4 text-sm font-poppins text-gray-700 bg-[#F5CBA8] outline-none border-none rounded-full shadow-sm"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-[#F46B03] hover:bg-[#C15300] transition-colors text-white font-bold font-poppins text-sm tracking-wide px-8 py-4 whitespace-nowrap disabled:opacity-70"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#F46B03] hover:bg-[#C15300] transition-colors text-white font-bold font-poppins text-[11px] sm:text-xs tracking-wide px-4 sm:px-6 h-10 rounded-full whitespace-nowrap disabled:opacity-70 shadow-sm"
               >
                 {loading ? '…' : 'SUBSCRIBE'}
               </button>

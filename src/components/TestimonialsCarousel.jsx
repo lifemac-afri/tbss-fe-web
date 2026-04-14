@@ -43,12 +43,12 @@ const TestimonialsCarousel = () => {
   const t = TESTIMONIALS[current];
 
   return (
-    <section className="w-full bg-[#F9B27A] py-20 px-4 relative overflow-hidden">
-      <div className="max-w-4xl mx-auto relative">
+    <section className="w-full bg-[#F9B27A] py-16 sm:py-24 px-6 sm:px-12 relative overflow-hidden">
+      <div className="max-w-4xl mx-auto relative px-4 sm:px-0">
         <button
           onClick={() => goTo(current - 1)}
           aria-label="Previous"
-          className="absolute left-[-2rem] sm:left-[-3rem] top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+          className="absolute left-[-1.5rem] sm:left-[-4rem] top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
         >
           <ChevronLeft size={28} />
         </button>
@@ -56,7 +56,7 @@ const TestimonialsCarousel = () => {
         <button
           onClick={() => goTo(current + 1)}
           aria-label="Next"
-          className="absolute right-[-2rem] sm:right-[-3rem] top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+          className="absolute right-[-1.5rem] sm:right-[-4rem] top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
         >
           <ChevronRight size={28} />
         </button>
