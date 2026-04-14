@@ -345,6 +345,8 @@ const CheckoutPage = () => {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [waitForPayment, setWaitForPayment] = useState(false);
 
+  const [orderSummary, setOrderSummary] = useState(null);
+
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
   useEffect(() => {
@@ -433,9 +435,24 @@ const CheckoutPage = () => {
           config: data.config,
           callBacks: {
             onInit: () => console.log('Hubtel Checkout initialized'),
-            onPaymentSuccess: (paymentData) => {
+            onPaymentSuccess: async (paymentData) => {
               console.log('Payment Success', paymentData);
-              // Mark flow complete
+              
+              // Capture order summary for confirmation step before clearing cart
+              setOrderSummary({
+                items: [...cartItems],
+                subtotal,
+                total: subtotal + DELIVERY_FEE,
+                form: { ...form }
+              });
+
+              // Trigger one manual status check to backend to force update to 'paid'
+              try {
+                await api.post(`/api/orders/${data.order.id}/check-payment/`);
+              } catch (err) {
+                console.error("Post-success status check failed:", err);
+              }
+
               clearCart();
               setStep(2);
               setPaying(false);
@@ -507,7 +524,15 @@ const CheckoutPage = () => {
               />
             )}
             {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onPay={handlePay} paying={paying} />}
-            {step === 2 && <ConfirmationStep orderId={orderId} form={form} cartItems={cartItems} subtotal={subtotal} paymentMethod="Hubtel Checkout" />}
+            {step === 2 && (
+              <ConfirmationStep 
+                orderId={orderId} 
+                form={orderSummary?.form || form} 
+                cartItems={orderSummary?.items || []} 
+                subtotal={orderSummary?.subtotal || 0} 
+                paymentMethod="Hubtel Checkout" 
+              />
+            )}
           </div>
 
           {/* Summary sidebar — hidden on confirmation */}
