@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight, CheckCircle, MapPin, CreditCard, ShoppingBag, ArrowLeft, Copy } from 'lucide-react';
+import CheckoutSdk from '@hubteljs/checkout';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import logo from '../assets/logo/logo.png';
 import api from '../lib/api';
@@ -69,7 +71,7 @@ const OrderSummaryPanel = ({ cartItems, subtotal }) => (
   </div>
 );
 
-const DeliveryStep = ({ form, setForm, onNext }) => {
+const DeliveryStep = ({ form, setForm, onNext, addresses, selectedAddressId, setSelectedAddressId, isAddingNew, setIsAddingNew }) => {
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -88,13 +90,71 @@ const DeliveryStep = ({ form, setForm, onNext }) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <MapPin size={18} className="text-[#F46B03]" />
-        <h2 className="font-bold text-gray-900">Delivery Information</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <MapPin size={18} className="text-[#F46B03]" />
+          <h2 className="font-bold text-gray-900">Delivery Information</h2>
+        </div>
+        {addresses.length > 0 && (
+          <button 
+            onClick={() => setIsAddingNew(!isAddingNew)}
+            className="text-xs font-semibold text-[#F46B03] hover:underline"
+          >
+            {isAddingNew ? "Select Saved Address" : "Add New Address"}
+          </button>
+        )}
       </div>
 
-      <Field label="Full Name" required>
+      {!isAddingNew && addresses.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Choose a delivery address</p>
+          <div className="grid gap-3">
+            {addresses.map((addr) => (
+              <label 
+                key={addr.id}
+                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedAddressId === addr.id ? 'border-[#F46B03] bg-orange-50/30' : 'border-gray-100 hover:border-gray-200'
+                }`}
+              >
+                <input 
+                  type="radio" 
+                  name="address" 
+                  checked={selectedAddressId === addr.id}
+                  onChange={() => {
+                    setSelectedAddressId(addr.id);
+                    setForm({
+                      name: addr.full_name,
+                      phone: addr.phone_number,
+                      street: addr.street_address,
+                      city: addr.city,
+                      region: addr.state_province,
+                      note: form.note
+                    });
+                  }}
+                  className="mt-1 accent-[#F46B03]"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-sm font-bold text-gray-800">{addr.full_name}</p>
+                    {addr.is_default && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">Default</span>}
+                  </div>
+                  <p className="text-sm text-gray-600 truncate">{addr.street_address}</p>
+                  <p className="text-xs text-gray-400">{addr.city}, {addr.state_province} · {addr.phone_number}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+          <button 
+            onClick={handleNext}
+            className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 mt-4"
+          >
+            Continue to Review <ChevronRight size={18} />
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Field label="Full Name" required>
         <input className={`${inputCls} ${errors.name ? 'border-red-300' : ''}`} placeholder="Kwame Mensah"
           value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name}</p>}
@@ -130,10 +190,22 @@ const DeliveryStep = ({ form, setForm, onNext }) => {
           value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
       </Field>
 
-      <button onClick={handleNext}
-        className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 mt-2">
-        Continue to Review <ChevronRight size={18} />
-      </button>
+      <label className="flex items-center gap-2 cursor-pointer mt-2">
+        <input 
+          type="checkbox" 
+          checked={form.saveAddress} 
+          onChange={(e) => setForm(f => ({ ...f, saveAddress: e.target.checked }))}
+          className="w-4 h-4 accent-[#F46B03] rounded border-gray-300"
+        />
+        <span className="text-sm text-gray-600">Save this address for future orders</span>
+      </label>
+
+          <button onClick={handleNext}
+            className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 mt-2">
+            Continue to Review <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -323,6 +395,7 @@ const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod })
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
+  const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -331,7 +404,12 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [form, setForm] = useState({
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
+    saveAddress: true,
   });
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  
   const [method, setMethod] = useState('mtn');
   const [momo, setMomo] = useState('');
   const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
@@ -339,6 +417,35 @@ const CheckoutPage = () => {
   const [pollingCount, setPollingCount] = useState(0);
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  useEffect(() => {
+    if (user) {
+      api.get('/api/users/me/addresses/')
+        .then(res => res.json())
+        .then(data => {
+          setAddresses(data.results || data);
+          const def = (data.results || data).find(a => a.is_default);
+          if (def) {
+            setSelectedAddressId(def.id);
+            setForm({
+              name: def.full_name,
+              phone: def.phone_number,
+              street: def.street_address,
+              city: def.city,
+              region: def.state_province,
+              note: '',
+            });
+          } else if (data.length > 0) {
+            setIsAddingNew(false);
+          } else {
+            setIsAddingNew(true);
+          }
+        })
+        .catch(err => console.error("Error fetching addresses:", err));
+    } else {
+      setIsAddingNew(true);
+    }
+  }, [user]);
 
   const startPolling = (id) => {
     setWaitingForApproval(true);
@@ -413,10 +520,24 @@ const CheckoutPage = () => {
     };
 
     try {
-      // Corrected endpoint to /api/orders/
+      // 1. Save address if requested
+      if (isAddingNew && form.saveAddress && user) {
+        await api.post('/api/users/me/addresses/', {
+          full_name: form.name,
+          phone_number: form.phone,
+          street_address: form.street,
+          city: form.city,
+          state_province: form.region,
+          postal_code: '0000', // Default
+          country: 'Ghana',
+          is_default: addresses.length === 0,
+        });
+      }
+
+      // 2. Create Order & Get Hubtel Config
       const res = await api.post('/api/orders/', payload);
       const data = await res.json();
-      
+
       if (!res.ok) {
         toast.error(data.detail || "Failed to create order. Please try again.");
         return;
@@ -424,11 +545,44 @@ const CheckoutPage = () => {
 
       if (data.id) {
         setOrderId(data.id);
-        if (method !== 'card') {
-          startPolling(data.id);
-        } else if (data.checkout_url) {
-          window.location.href = data.checkout_url;
-        }
+
+        // Use the Hubtel Checkout SDK for all payment methods
+        const checkout = new CheckoutSdk();
+
+        const purchaseInfo = {
+          amount: subtotal + DELIVERY_FEE,
+          purchaseDescription: `Payment for Order #${data.id} on TBSS`,
+          customerPhoneNumber: form.phone,
+          clientReference: data.id,
+        };
+
+        const config = {
+          branding: "enabled",
+          callbackUrl: data.payment_config?.callbackUrl || "https://api-staging.tbssgh.com/api/orders/webhooks/payment/",
+          merchantAccount: data.payment_config?.merchantAccount,
+          basicAuth: data.payment_config?.basicAuth,
+        };
+
+        checkout.openModal({
+          purchaseInfo,
+          config,
+          callBacks: {
+            onInit: () => console.log('Hubtel Checkout initialized'),
+            onPaymentSuccess: (paymentData) => {
+              console.log('Payment Success', paymentData);
+              setOrderId(data.id);
+              clearCart();
+              setStep(3);
+            },
+            onPaymentFailure: (paymentData) => {
+              console.log('Payment Failure', paymentData);
+              toast.error("Payment failed. Please try again.");
+            },
+            onClose: () => {
+              setPaying(false);
+            }
+          }
+        });
       }
     } catch (err) {
       console.error("Checkout error:", err);
@@ -475,7 +629,18 @@ const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main panel */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 lg:p-6 shadow-sm">
-            {step === 0 && <DeliveryStep form={form} setForm={setForm} onNext={() => setStep(1)} />}
+            {step === 0 && (
+              <DeliveryStep 
+                form={form} 
+                setForm={setForm} 
+                onNext={() => setStep(1)} 
+                addresses={addresses}
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={setSelectedAddressId}
+                isAddingNew={isAddingNew}
+                setIsAddingNew={setIsAddingNew}
+              />
+            )}
             {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
             {step === 2 && (
               <PaymentStep 

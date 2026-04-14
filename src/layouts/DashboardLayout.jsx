@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ShoppingBag, Bookmark, BookOpen,
-  User, Bell, Settings, LogOut, ChevronRight, Menu, X
+  User, Bell, Settings, LogOut, ChevronRight, Menu, X, MapPin
 } from 'lucide-react';
 import logo from '../assets/logo/logo.png';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ const navItems = [
   { icon: BookOpen, label: 'Book Clubs', href: '/dashboard/book-clubs' },
   { icon: BookOpen, label: 'Reading Plans', href: '/dashboard/reading-plans' },
   { icon: Bell, label: 'Notifications', href: '/dashboard/notifications' },
+  { icon: MapPin, label: 'Addresses', href: '/dashboard/addresses' },
   { icon: Settings, label: 'Account Settings', href: '/dashboard/account' },
 ];
 
