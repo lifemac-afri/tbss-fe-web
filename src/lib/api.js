@@ -57,7 +57,19 @@ async function request(path, options = {}) {
     headers,
   });
 
-  if (res.status === 401 && token) {
+  // Trigger refresh if 401 OR if response contains token_not_valid error
+  let shouldRefresh = res.status === 401;
+  if (!shouldRefresh) {
+    const clone = res.clone();
+    try {
+      const body = await clone.json();
+      if (body.code === 'token_not_valid') {
+        shouldRefresh = true;
+      }
+    } catch {}
+  }
+
+  if (shouldRefresh && token) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
