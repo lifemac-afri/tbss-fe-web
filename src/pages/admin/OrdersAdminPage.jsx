@@ -37,6 +37,10 @@ export default function OrdersAdminPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [statusCounts, setStatusCounts] = useState({});
   const PAGE_SIZE = 20;
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkExtra, setBulkExtra] = useState('');
+  const [submittingIds, setSubmittingIds] = useState(new Set());
 
   const fetchOrders = useCallback(() => {
     setLoading(true);
@@ -58,18 +62,84 @@ export default function OrdersAdminPage() {
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const handleStatusChange = async (orderId, newStatus) => {
+    let extra = {};
+    if (newStatus === 'cancelled') {
+      const reason = window.prompt('Enter cancellation reason:');
+      if (!reason) return;
+      extra.cancellation_reason = reason;
+    } else if (newStatus === 'shipped') {
+      const url = window.prompt('Enter tracking URL (optional):');
+      if (url) extra.tracking_url = url;
+    }
+
+    setSubmittingIds(prev => new Set(prev).add(orderId));
     setUpdating(orderId);
     try {
-      const result = await patch(`/api/cart/admin/orders/${orderId}/status/`, { status: newStatus });
+      const result = await patch(`/api/cart/admin/orders/${orderId}/status/`, { 
+        status: newStatus,
+        ...extra
+      });
       if (statusFilter !== 'All') {
         fetchOrders();
       } else {
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: result.new_status || newStatus } : o));
+        setOrders(prev => prev.map(o => o.id === orderId ? { 
+          ...o, 
+          status: result.new_status || newStatus,
+          tracking_url: extra.tracking_url || o.tracking_url,
+          cancellation_reason: extra.cancellation_reason || o.cancellation_reason
+        } : o));
       }
-    } catch {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    } catch (err) {
+      console.error("Status update failed", err);
     }
     setUpdating(null);
+    setSubmittingIds(prev => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+    });
+  };
+
+  const handleBulkStatusChange = async () => {
+    if (!bulkStatus || selectedIds.length === 0) return;
+    
+    const extra = {};
+    if (bulkStatus === 'cancelled') {
+        if (!bulkExtra) { alert('Cancellation reason is required'); return; }
+        extra.cancellation_reason = bulkExtra;
+    } else if (bulkStatus === 'shipped') {
+        extra.tracking_url = bulkExtra;
+    }
+
+    setLoading(true);
+    try {
+      await patch(`/api/cart/admin/orders/bulk-status/`, {
+        order_ids: selectedIds,
+        status: bulkStatus,
+        ...extra
+      });
+      fetchOrders();
+      setSelectedIds([]);
+      setBulkStatus('');
+      setBulkExtra('');
+    } catch (err) {
+      console.error("Bulk update failed", err);
+      setLoading(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === orders.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(orders.map(o => o.id));
+    }
+  };
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const handleFilterChange = (newStatus) => {
@@ -143,6 +213,57 @@ export default function OrdersAdminPage() {
         />
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="bg-gray-900 text-white rounded-2xl p-4 mb-4 flex items-center justify-between shadow-lg animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium">{selectedIds.length} orders selected</span>
+            <button 
+              onClick={() => setSelectedIds([])}
+              className="text-xs text-gray-400 hover:text-white underline"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={bulkStatus}
+              onChange={e => { setBulkStatus(e.target.value); setBulkExtra(''); }}
+              className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:border-[#F46B03] transition-colors"
+            >
+              <option value="">Update Status...</option>
+              {DJANGO_STATUSES.map(s => <option key={s} value={s}>{statusLabel[s]}</option>)}
+            </select>
+            {(bulkStatus === 'cancelled' || bulkStatus === 'shipped') && (
+              <input 
+                placeholder={bulkStatus === 'cancelled' ? 'Reason for cancelling...' : 'Tracking URL...'}
+                value={bulkExtra}
+                onChange={e => setBulkExtra(e.target.value)}
+                className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:border-[#F46B03] transition-colors min-w-[180px]"
+              />
+            )}
+            <button
+              onClick={handleBulkStatusChange}
+              disabled={!bulkStatus || loading}
+              className="bg-[#F46B03] hover:bg-[#e06202] disabled:opacity-50 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+            >
+              Apply to Selected
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Table Header with Select All */}
+      <div className="bg-white rounded-t-2xl border-x border-t border-gray-100 px-5 py-3 flex items-center gap-4">
+        <input 
+          type="checkbox"
+          checked={orders.length > 0 && selectedIds.length === orders.length}
+          onChange={toggleSelectAll}
+          className="w-4 h-4 rounded border-gray-300 text-[#F46B03] focus:ring-[#F46B03]"
+        />
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Select All Orders on Page</span>
+      </div>
+
       {/* Orders list */}
       <div className="space-y-3">
         {loading && (
@@ -158,6 +279,13 @@ export default function OrdersAdminPage() {
               onClick={() => setExpanded(expanded === order.id ? null : order.id)}
             >
               <div className="flex items-center gap-4">
+                <input 
+                  type="checkbox"
+                  checked={selectedIds.includes(order.id)}
+                  onChange={() => toggleSelectOne(order.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="w-4 h-4 rounded border-gray-300 text-[#F46B03] focus:ring-[#F46B03]"
+                />
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-gray-900 text-sm font-mono">#{String(order.id).slice(0, 8).toUpperCase()}</p>
@@ -178,11 +306,14 @@ export default function OrdersAdminPage() {
                   value={order.status}
                   onChange={e => { e.stopPropagation(); handleStatusChange(order.id, e.target.value); }}
                   onClick={e => e.stopPropagation()}
-                  disabled={updating === order.id}
-                  className="border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:border-[#F46B03] transition-colors disabled:opacity-50 bg-white"
+                  disabled={submittingIds.has(order.id)}
+                  className={`border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-medium outline-none focus:border-[#F46B03] transition-colors disabled:opacity-50 bg-white ${submittingIds.has(order.id) ? 'cursor-not-allowed text-gray-400' : ''}`}
                 >
                   {DJANGO_STATUSES.map(s => <option key={s} value={s}>{statusLabel[s]}</option>)}
                 </select>
+                {submittingIds.has(order.id) && (
+                  <div className="w-4 h-4 border-2 border-[#F46B03] border-t-transparent rounded-full animate-spin ml-[-32px] mr-[16px]" />
+                )}
                 <svg
                   width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
                   className={`text-gray-400 transition-transform ${expanded === order.id ? 'rotate-180' : ''}`}
@@ -226,6 +357,50 @@ export default function OrdersAdminPage() {
                       </p>
                     </div>
                   ))}
+                </div>
+
+                {/* Status History Timeline */}
+                <div className="mt-6 border-t border-gray-100 pt-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase mb-3 text-left">Status History</p>
+                  <div className="space-y-4">
+                    {(order.audit_logs || []).length > 0 ? (
+                      order.audit_logs.map((log, idx) => (
+                        <div key={log.id || idx} className="relative pl-6 pb-4 last:pb-0 text-left">
+                          {/* Timeline Line */}
+                          {idx !== (order.audit_logs.length - 1) && (
+                            <div className="absolute left-[7px] top-[14px] bottom-0 w-[2px] bg-gray-100" />
+                          )}
+                          {/* Timeline Dot */}
+                          <div className="absolute left-0 top-[6px] w-[14px] h-[14px] rounded-full border-2 border-[#F46B03] bg-white flex items-center justify-center">
+                            <div className="w-[6px] h-[6px] rounded-full bg-[#F46B03]" />
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${statusColors[log.old_status] || 'bg-gray-100'}`}>
+                                    {statusLabel[log.old_status] || log.old_status}
+                                  </span>
+                                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-300">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                  </svg>
+                                  <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${statusColors[log.new_status] || 'bg-gray-100'}`}>
+                                    {statusLabel[log.new_status] || log.new_status}
+                                  </span>
+                                </div>
+                                {log.notes && <p className="text-xs text-gray-600 mt-1 italic">"{log.notes}"</p>}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] text-gray-500 font-medium">{log.changed_by_name}</p>
+                              <p className="text-[9px] text-gray-400">{new Date(log.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-400 italic text-left">No history records found for this order.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

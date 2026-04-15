@@ -12,9 +12,11 @@
   "dependencies": {
     "@hubteljs/checkout": "^1.1.4",
     "autoprefixer": "^10.4.27",
+    "canvas-confetti": "^1.9.4",
     "concurrently": "^9.2.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^1.7.0",
     "nodemailer": "^8.0.4",
     "postcss": "^8.5.8",
