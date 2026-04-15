@@ -33,6 +33,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import GoogleCallbackPage from './pages/auth/GoogleCallbackPage';
 
 import DashboardPage from './pages/dashboard/DashboardPage';
 import OrdersPage from './pages/dashboard/OrdersPage';
@@ -90,6 +91,9 @@ function App() {
 
                     {/* Checkout — standalone (no nav/footer) */}
                     <Route path="checkout" element={<CheckoutPage />} />
+
+                    {/* Google OAuth callback — no layout wrapper needed */}
+                    <Route path="auth/callback" element={<GoogleCallbackPage />} />
 
                     {/* Auth Routes — Auth Layout */}
                     <Route element={<AuthLayout />}>
