@@ -69,8 +69,8 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    // TODO: redirect to backend Google OAuth endpoint
-    window.location.href = '/api/auth/google';
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    window.location.href = `${apiBase}/api/auth/social/login/google-oauth2/`;
   };
 
   const isLocked = failedAttempts >= 5;
