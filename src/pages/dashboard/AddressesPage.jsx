@@ -77,7 +77,7 @@ const AddressesPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this address?')) return;
     try {
-      const res = await api.delete(`/api/users/me/addresses/${id}/`);
+      const res = await api.del(`/api/users/me/addresses/${id}/`);
       if (res.ok) {
         toast.success('Address deleted');
         fetchAddresses();

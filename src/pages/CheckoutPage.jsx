@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import logo from '../assets/logo/logo.png';
 import api from '../lib/api';
+import CelebrationModal from '../components/CelebrationModal';
 
 const DELIVERY_FEE = 0;
 const STEPS = ['Delivery', 'Review', 'Payment', 'Done'];
@@ -129,7 +130,8 @@ const DeliveryStep = ({ form, setForm, onNext, addresses, selectedAddressId, set
                       street: addr.street_address,
                       city: addr.city,
                       region: addr.state_province,
-                      note: form.note
+                      note: form.note,
+                      saveAddress: false,
                     });
                   }}
                   className="mt-1 accent-[#F46B03]"
@@ -329,7 +331,7 @@ const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod })
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
-  const { user } = useAuth();
+  const { currentUser: user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -340,6 +342,10 @@ const CheckoutPage = () => {
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
     saveAddress: true,
   });
+  const [celebrationOpen, setCelebrationOpen] = useState(false);
+  const [celebrationStats, setCelebrationStats] = useState(null);
+  const [celebrationProductImage, setCelebrationProductImage] = useState(null);
+
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -354,8 +360,9 @@ const CheckoutPage = () => {
       api.get('/api/users/me/addresses/')
         .then(res => res.json())
         .then(data => {
-          setAddresses(data.results || data);
-          const def = (data.results || data).find(a => a.is_default);
+          const list = data.results || data;
+          setAddresses(list);
+          const def = list.find(a => a.is_default);
           if (def) {
             setSelectedAddressId(def.id);
             setForm({
@@ -365,8 +372,19 @@ const CheckoutPage = () => {
               city: def.city,
               region: def.state_province,
               note: '',
+              saveAddress: false,
             });
-          } else if (data.length > 0) {
+          } else if (list.length > 0) {
+            setSelectedAddressId(list[0].id);
+            setForm({
+              name: list[0].full_name,
+              phone: list[0].phone_number,
+              street: list[0].street_address,
+              city: list[0].city,
+              region: list[0].state_province,
+              note: '',
+              saveAddress: false,
+            });
             setIsAddingNew(false);
           } else {
             setIsAddingNew(true);
@@ -448,9 +466,22 @@ const CheckoutPage = () => {
 
               // Trigger one manual status check to backend to force update to 'paid'
               try {
-                await api.post(`/api/orders/${data.order.id}/check-payment/`);
+                const checkRes = await api.post(`/api/orders/${data.order.id}/check-payment/`);
+                const checkData = await checkRes.json();
+                
+                // Fetch full order details to get regional stats
+                const fullOrderRes = await api.get(`/api/orders/${data.order.id}/`);
+                const fullOrder = await fullOrderRes.json();
+
+                if (fullOrder.regional_stats) {
+                  setCelebrationStats(fullOrder.regional_stats);
+                  // Get product image from the items
+                  const firstItem = fullOrder.items[0];
+                  setCelebrationProductImage(firstItem?.product_image);
+                  setCelebrationOpen(true);
+                }
               } catch (err) {
-                console.error("Post-success status check failed:", err);
+                console.error("Post-success status check or fetch failed:", err);
               }
 
               clearCart();
@@ -543,6 +574,13 @@ const CheckoutPage = () => {
           )}
         </div>
       </div>
+
+      <CelebrationModal 
+        isOpen={celebrationOpen} 
+        onClose={() => setCelebrationOpen(false)}
+        stats={celebrationStats}
+        productImage={celebrationProductImage}
+      />
     </div>
   );
 };
