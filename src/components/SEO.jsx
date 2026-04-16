@@ -2,7 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 const SEO = ({ title, description, keywords, ogImage, ogType, canonicalUrl }) => {
-  const siteTitle = "TorchBearers School Supplies";
+  const siteTitle = "Torchbearers Books and Stationery Services";
   const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
   const defaultDescription = "Ghana's leading bookshop and reading community. High-quality textbooks, stationery, and a vibrant community of readers.";
   const defaultKeywords = "bookshop, reading community, books ghana, school supplies, stationery";
