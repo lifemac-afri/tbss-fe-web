@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Turnstile from '@marsidev/react-turnstile';
+import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../lib/api';
 
 const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
