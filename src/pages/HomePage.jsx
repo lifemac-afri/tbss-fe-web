@@ -9,6 +9,7 @@ import NewsletterSection from '../components/NewsletterSection';
 import GlobalSearch from '../components/GlobalSearch';
 import api from '../lib/api';
 import { normalizeProduct } from '../lib/normalizeProduct';
+import SEO from '../components/SEO';
 
 const fetchSection = (param) =>
   api.get(`/api/products/?${param}&page_size=12&is_active=true`)
@@ -38,6 +39,11 @@ const HomePage = () => {
 
   return (
     <div className="bg-white">
+      <SEO 
+        title="Home"
+        description="Ghana's leading bookshop and reading community. Shop the best textbooks, school supplies, and join our vibrant reading community."
+        canonicalUrl="/"
+      />
       <GlobalSearch />
 
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
