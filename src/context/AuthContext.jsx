@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = !!currentUser;
   const isAdmin = currentUser?.is_staff === true;
+  const isSuperAdmin = currentUser?.is_superuser === true;
 
   const _setUser = (user) => {
     setCurrentUser(user);
@@ -195,6 +196,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     isAuthenticated,
     isAdmin,
+    isSuperAdmin,
     isLoading,
     login,
     loginWithToken,

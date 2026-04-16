@@ -5,6 +5,12 @@ import { useToast } from '../../components/Toast';
 import api from '../../lib/api';
 import Pagination from '../../components/admin/Pagination';
 
+const RefreshBtn = ({ onClick, disabled }) => (
+  <button onClick={onClick} disabled={disabled} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30" title="Refresh">
+    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+  </button>
+);
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
 const inputCls = "w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F46B03]/20 focus:border-[#F46B03] transition-colors";
@@ -135,8 +141,19 @@ function ProfileTab() {
 
 // ── Tab: Staff ────────────────────────────────────────────────────────────────
 
+const ROLE_BADGE = {
+  superadmin: 'bg-purple-100 text-purple-700',
+  admin: 'bg-orange-100 text-orange-700',
+};
+
+function roleLabel(user) {
+  if (user.is_superuser) return 'superadmin';
+  return 'admin';
+}
+
 function StaffTab() {
   const { get, put } = useAdmin();
+  const { currentUser, isSuperAdmin } = useAuth();
   const toast = useToast();
 
   const [staff, setStaff] = useState([]);
@@ -146,22 +163,23 @@ function StaffTab() {
   const [sending, setSending] = useState(false);
   const [revoking, setRevoking] = useState(null);
   const [removing, setRemoving] = useState(null);
+  const [promoting, setPromoting] = useState(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [staffData, inviteRes] = await Promise.all([
-        get('/api/admin/users/?is_staff=true&page_size=200'),
-        api.get('/api/admin/staff/invites/').then(r => r.json()),
-      ]);
+      const staffData = await get('/api/admin/users/?is_staff=true&page_size=200');
       setStaff(Array.isArray(staffData) ? staffData : (staffData.results || []));
-      setInvites(Array.isArray(inviteRes) ? inviteRes : (inviteRes.results || []));
+      if (isSuperAdmin) {
+        const inviteRes = await api.get('/api/admin/staff/invites/').then(r => r.json());
+        setInvites(Array.isArray(inviteRes) ? inviteRes : (inviteRes.results || []));
+      }
     } catch {
       toast.error('Failed to load staff data');
     } finally {
       setLoading(false);
     }
-  }, [get]);
+  }, [get, isSuperAdmin]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -203,27 +221,60 @@ function StaffTab() {
     finally { setRemoving(null); }
   };
 
+  const handleToggleSuperAdmin = async (user) => {
+    const promote = !user.is_superuser;
+    const msg = promote
+      ? `Promote ${user.first_name || user.email} to Superadmin? They will have full control including managing other staff.`
+      : `Demote ${user.first_name || user.email} from Superadmin? They will retain admin access but lose superadmin privileges.`;
+    if (!window.confirm(msg)) return;
+    setPromoting(user.id);
+    try {
+      const updated = await put(`/api/admin/users/${user.id}/`, { is_superuser: promote });
+      setStaff(p => p.map(u => u.id === updated.id ? updated : u));
+      toast.success(promote ? 'Promoted to Superadmin' : 'Demoted to Admin');
+    } catch { toast.error('Failed to update role'); }
+    finally { setPromoting(null); }
+  };
+
   const pending = invites.filter(i => !i.used && !i.is_expired);
 
   return (
     <div className="space-y-6">
-      {/* Invite */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <h2 className="font-bold text-gray-800 mb-1">Invite a Staff Member</h2>
-        <p className="text-xs text-gray-400 mb-4">They'll receive an email with a 7-day link to set up their account.</p>
-        <form onSubmit={handleInvite} className="flex gap-3">
-          <input type="email" placeholder="colleague@example.com" required value={inviteEmail}
-            onChange={e => setInviteEmail(e.target.value)}
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F46B03]/20 focus:border-[#F46B03] transition-colors" />
-          <button type="submit" disabled={sending || !inviteEmail.trim()}
-            className="px-5 py-2.5 bg-[#F46B03] text-white text-sm font-semibold rounded-xl hover:bg-[#C15300] disabled:opacity-50 transition-colors whitespace-nowrap">
-            {sending ? 'Sending…' : 'Send Invite'}
-          </button>
-        </form>
+      {/* Role legend */}
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-4 flex flex-wrap gap-6 text-sm">
+        <div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700 uppercase mr-2">Superadmin</span>
+          <span className="text-blue-700">Full control — can invite/remove staff, manage all settings</span>
+        </div>
+        <div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700 uppercase mr-2">Admin</span>
+          <span className="text-blue-700">Can manage products, orders, customers, content</span>
+        </div>
       </div>
 
-      {/* Pending invites */}
-      {pending.length > 0 && (
+      {/* Invite — superadmins only */}
+      {isSuperAdmin ? (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <h2 className="font-bold text-gray-800 mb-1">Invite a Staff Member</h2>
+          <p className="text-xs text-gray-400 mb-4">They'll receive an email with a 7-day link to set up their account.</p>
+          <form onSubmit={handleInvite} className="flex gap-3">
+            <input type="email" placeholder="colleague@example.com" required value={inviteEmail}
+              onChange={e => setInviteEmail(e.target.value)}
+              className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F46B03]/20 focus:border-[#F46B03] transition-colors" />
+            <button type="submit" disabled={sending || !inviteEmail.trim()}
+              className="px-5 py-2.5 bg-[#F46B03] text-white text-sm font-semibold rounded-xl hover:bg-[#C15300] disabled:opacity-50 transition-colors whitespace-nowrap">
+              {sending ? 'Sending…' : 'Send Invite'}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm text-gray-400">
+          Only Superadmins can invite new staff members.
+        </div>
+      )}
+
+      {/* Pending invites — superadmins only */}
+      {isSuperAdmin && pending.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50">
             <h2 className="font-bold text-gray-800">Pending Invites <span className="text-xs font-normal text-gray-400 ml-1">({pending.length})</span></h2>
@@ -249,8 +300,9 @@ function StaffTab() {
 
       {/* Staff list */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
           <h2 className="font-bold text-gray-800">Current Staff <span className="text-xs font-normal text-gray-400 ml-1">({staff.length})</span></h2>
+          <RefreshBtn onClick={fetchAll} disabled={loading} />
         </div>
         {loading ? (
           <div className="flex items-center justify-center h-28">
@@ -260,6 +312,8 @@ function StaffTab() {
           <div className="divide-y divide-gray-50">
             {staff.map(user => {
               const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username;
+              const role = roleLabel(user);
+              const isSelf = user.id === currentUser?.id;
               return (
                 <div key={user.id} className="flex items-center justify-between px-6 py-3.5">
                   <div className="flex items-center gap-3">
@@ -267,22 +321,38 @@ function StaffTab() {
                       <span className="text-sm font-bold text-[#F46B03]">{initials(user)}</span>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-gray-800">{name}</p>
-                        {user.is_superuser && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded uppercase">Superuser</span>
-                        )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-800">{name}{isSelf && <span className="text-gray-400 font-normal"> (you)</span>}</p>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${ROLE_BADGE[role]}`}>{role}</span>
                       </div>
                       <p className="text-xs text-gray-400">{user.email} · Joined {formatDate(user.date_joined)}</p>
                     </div>
                   </div>
-                  {!user.is_superuser ? (
-                    <button onClick={() => handleRemove(user.id)} disabled={removing === user.id}
-                      className="text-xs font-medium px-3 py-1.5 rounded-xl border border-gray-200 text-gray-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
-                      {removing === user.id ? 'Removing…' : 'Remove Access'}
-                    </button>
-                  ) : (
-                    <span className="text-xs text-gray-300 italic">Protected</span>
+                  {isSuperAdmin && !isSelf && (
+                    <div className="flex items-center gap-2">
+                      {/* Promote/demote */}
+                      <button
+                        onClick={() => handleToggleSuperAdmin(user)}
+                        disabled={promoting === user.id}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50 ${
+                          user.is_superuser
+                            ? 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {promoting === user.id ? '…' : user.is_superuser ? 'Demote' : 'Make Superadmin'}
+                      </button>
+                      {/* Remove staff access — can't remove another superadmin */}
+                      {!user.is_superuser && (
+                        <button onClick={() => handleRemove(user.id)} disabled={removing === user.id}
+                          className="text-xs font-medium px-3 py-1.5 rounded-xl border border-gray-200 text-gray-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50">
+                          {removing === user.id ? 'Removing…' : 'Remove'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {(!isSuperAdmin || isSelf) && (
+                    <span className="text-xs text-gray-300 italic">{isSelf ? 'You' : 'Protected'}</span>
                   )}
                 </div>
               );
