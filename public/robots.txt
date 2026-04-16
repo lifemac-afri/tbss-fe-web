@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Exclude admin and dashboard areas
+Disallow: /admin/
+Disallow: /dashboard/
+
+Sitemap: https://tbssgh.com/sitemap.xml

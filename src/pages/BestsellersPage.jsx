@@ -7,6 +7,7 @@ import bookmarkActiveIcon from '../assets/icons/bookmark_active.svg';
 import { ShoppingCart, Check, TrendingUp, Loader2 } from 'lucide-react';
 import api from '../lib/api';
 import { normalizeProduct } from '../lib/normalizeProduct';
+import SEO from '../components/SEO';
 
 const RankBadge = ({ rank }) => {
   if (rank === 1) return <span className="text-xl">🥇</span>;
@@ -97,6 +98,11 @@ const BestsellersPage = () => {
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <SEO 
+        title="Bestsellers"
+        description="The most-loved reads in our community — ranked by ratings and reader reviews. Discover the books everyone is talking about in Ghana."
+        canonicalUrl="/bestsellers"
+      />
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-1">

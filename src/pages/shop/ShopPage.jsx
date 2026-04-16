@@ -5,6 +5,7 @@ import { SlidersHorizontal, X, ChevronRight, LayoutGrid, List, Search } from 'lu
 import BookCard from '../../components/BookCard';
 import BookListCard from '../../components/BookListCard';
 import { normalizeProduct } from '../../lib/normalizeProduct';
+import SEO from '../../components/SEO';
 
 const sortOptions = [
   { value: 'relevance', label: 'Relevance' },
@@ -352,6 +353,11 @@ const ShopPage = () => {
       `}</style>
 
       <div className="bg-white min-h-screen">
+        <SEO 
+          title={pageTitle}
+          description={`Browse our collection of ${pageTitle.toLowerCase()}. High-quality educational materials and books from TorchBearers Ghana.`}
+          canonicalUrl="/shop"
+        />
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
           {/* Breadcrumb */}
