@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 
 function Spinner() {
@@ -66,13 +66,16 @@ export default function CategoriesAdminPage() {
   const [savingSubGenre, setSavingSubGenre] = useState(false);
   const [deleteSubGenre, setDeleteSubGenre] = useState(null);
 
-  useEffect(() => {
+  const fetchCategories = useCallback(() => {
+    setLoadingCats(true);
     get('/api/admin/categories/?page_size=200').then(data => {
       const list = Array.isArray(data) ? data : (data.results || []);
       setCategories(list);
       setLoadingCats(false);
     }).catch(() => setLoadingCats(false));
-  }, []);
+  }, [get]);
+
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const loadGenres = (catId) => {
     setLoadingGenres(true);
@@ -203,9 +206,14 @@ export default function CategoriesAdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Categories, Genres & Sub-genres</h1>
-        <p className="text-sm text-gray-500 mt-1">Three-level hierarchy: click a category to see its genres, click a genre to manage sub-genres</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Categories, Genres & Sub-genres</h1>
+          <p className="text-sm text-gray-500 mt-1">Three-level hierarchy: click a category to see its genres, click a genre to manage sub-genres</p>
+        </div>
+        <button onClick={fetchCategories} disabled={loadingCats} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30" title="Refresh">
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

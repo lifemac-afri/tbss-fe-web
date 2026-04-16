@@ -151,6 +151,9 @@ export default function ReviewsAdminPage() {
           <h1 className="text-2xl font-bold font-poppins text-gray-900">Review Moderation</h1>
           <p className="text-sm text-gray-500 mt-1">Approve and manage customer reviews</p>
         </div>
+        <button onClick={fetchReviews} disabled={loading} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30 self-start sm:self-auto" title="Refresh">
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

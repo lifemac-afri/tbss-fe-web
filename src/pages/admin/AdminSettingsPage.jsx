@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAdmin } from '../../context/AdminContext';
 import { useToast } from '../../components/Toast';
 import api from '../../lib/api';
+import Pagination from '../../components/admin/Pagination';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -337,10 +338,13 @@ function AuditLogTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-2">
         <input placeholder="Filter by action…" value={actionFilter}
           onChange={e => { setActionFilter(e.target.value); setPage(1); }}
           className="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#F46B03] transition-colors w-52" />
+        <button onClick={fetchLogs} disabled={loading} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30" title="Refresh">
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -398,18 +402,7 @@ function AuditLogTab() {
             ))}
           </div>
         )}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-            <p className="text-xs text-gray-400">{totalCount} entries</p>
-            <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors">Previous</button>
-              <span className="px-3 py-1.5 text-xs text-gray-500">Page {page} of {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition-colors">Next</button>
-            </div>
-          </div>
-        )}
+        <Pagination page={page} totalPages={totalPages} totalCount={totalCount} pageSize={PAGE_SIZE} onPage={setPage} />
       </div>
     </div>
   );
