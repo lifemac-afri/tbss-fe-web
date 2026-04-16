@@ -1,44 +1,43 @@
-import React, { useRef, useState } from 'react';
-import ReCAPTCHA from 'react-google-recaptcha';
+import React, { useState } from 'react';
+import Turnstile from '@marsidev/react-turnstile';
 import api from '../lib/api';
 
-const SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 
 const NewsletterSection = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const recaptchaRef = useRef(null);
+  const [token, setToken] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
     setError('');
 
-    let recaptcha_token = '';
-    if (SITE_KEY && recaptchaRef.current) {
-      recaptcha_token = recaptchaRef.current.getValue() || '';
-      if (!recaptcha_token) {
-        setError('Please complete the reCAPTCHA check.');
-        return;
-      }
+    if (SITE_KEY && !token) {
+      setError('Please complete the safety check.');
+      return;
     }
 
     setLoading(true);
     try {
-      const res = await api.post('/api/newsletter/subscribe/', { email: email.trim(), recaptcha_token });
+      const res = await api.post('/api/newsletter/subscribe/', { 
+        email: email.trim(), 
+        captcha_token: token 
+      });
       if (res.ok || res.status === 201) {
         setSubmitted(true);
         setEmail('');
       } else {
         const data = await res.json().catch(() => ({}));
         setError(data.detail || 'Something went wrong. Please try again.');
-        recaptchaRef.current?.reset();
+        // Turnstile usually auto-resets on failure if configured, 
+        // but we can force it by resetting the state if needed.
       }
     } catch {
       setError('Could not connect. Please try again.');
-      recaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -77,7 +76,13 @@ const NewsletterSection = () => {
 
             {SITE_KEY && (
               <div className="flex justify-center">
-                <ReCAPTCHA ref={recaptchaRef} sitekey={SITE_KEY} theme="light" />
+                <Turnstile 
+                  siteKey={SITE_KEY} 
+                  onSuccess={(token) => setToken(token)}
+                  onError={() => setError('Turnstile verification failed.')}
+                  onExpire={() => setToken('')}
+                  options={{ theme: 'light' }}
+                />
               </div>
             )}
 
