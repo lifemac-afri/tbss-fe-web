@@ -8,6 +8,7 @@ import { AdminProvider } from './context/AdminContext';
 import { RealtimeProvider } from './context/RealtimeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
@@ -69,6 +70,7 @@ function App() {
               <ToastProvider>
                 <RealtimeProvider>
                 <BrowserRouter>
+                  <ScrollToTop />
                   <Routes>
                     {/* Public Routes — Main Layout */}
                     <Route element={<MainLayout />}>
