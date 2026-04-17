@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 
 const statusColors = {
@@ -56,28 +56,28 @@ export default function BookClubsAdminPage() {
   const [filter, setFilter] = useState('All');
   const [showAdd, setShowAdd] = useState(false);
 
-  useEffect(() => {
-    async function fetchAll() {
-      try {
-        let results = [];
-        let url = '/api/admin/book-clubs/?page_size=100';
-        while (url) {
-          const data = await get(url);
-          if (Array.isArray(data)) {
-            results = results.concat(data);
-            url = null;
-          } else {
-            results = results.concat(data.results || []);
-            url = data.next ? data.next.replace(/^https?:\/\/[^/]+/, '') : null;
-          }
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      let results = [];
+      let url = '/api/admin/book-clubs/?page_size=100';
+      while (url) {
+        const data = await get(url);
+        if (Array.isArray(data)) {
+          results = results.concat(data);
+          url = null;
+        } else {
+          results = results.concat(data.results || []);
+          url = data.next ? data.next.replace(/^https?:\/\/[^/]+/, '') : null;
         }
-        setClubs(results.map(normalizeClub));
-      } finally {
-        setLoading(false);
       }
+      setClubs(results.map(normalizeClub));
+    } finally {
+      setLoading(false);
     }
-    fetchAll();
-  }, []);
+  }, [get]);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const openEdit = (c) => { setShowAdd(false); setSelected(c); setForm({ ...c }); };
   const openAdd = () => { setSelected(null); setForm({ ...emptyForm }); setShowAdd(true); };
@@ -137,13 +137,18 @@ export default function BookClubsAdminPage() {
             {clubs.length} clubs · {clubs.filter(c => c.status === 'pending').length} pending approval
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 bg-[#F46B03] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#C15300] transition-colors"
-        >
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Club
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={fetchAll} disabled={loading} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30" title="Refresh">
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 bg-[#F46B03] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#C15300] transition-colors"
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Club
+          </button>
+        </div>
       </div>
 
       {/* Status filter tabs */}

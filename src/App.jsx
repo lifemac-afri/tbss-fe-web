@@ -50,6 +50,9 @@ import ProductsAdminPage from './pages/admin/ProductsAdminPage';
 import CategoriesAdminPage from './pages/admin/CategoriesAdminPage';
 import OrdersAdminPage from './pages/admin/OrdersAdminPage';
 import UsersAdminPage from './pages/admin/UsersAdminPage';
+import AdminStaffPage from './pages/admin/AdminStaffPage';
+import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import BlogAdminPage from './pages/admin/BlogAdminPage';
 import ReadingPlansAdminPage from './pages/admin/ReadingPlansAdminPage';
 import BookClubsAdminPage from './pages/admin/BookClubsAdminPage';
@@ -57,6 +60,7 @@ import SectionsAdminPage from './pages/admin/SectionsAdminPage';
 import ReviewsAdminPage from './pages/admin/ReviewsAdminPage';
 import DealsAdminPage from './pages/admin/DealsAdminPage';
 import NewsletterAdminPage from './pages/admin/NewsletterAdminPage';
+import AcceptInvitePage from './pages/auth/AcceptInvitePage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 import TermsPage from './pages/legal/TermsPage';
 
@@ -141,7 +145,11 @@ function App() {
                       <Route path="reviews" element={<ReviewsAdminPage />} />
                       <Route path="categories" element={<CategoriesAdminPage />} />
                       <Route path="orders" element={<OrdersAdminPage />} />
+                      <Route path="customers" element={<UsersAdminPage />} />
                       <Route path="users" element={<UsersAdminPage />} />
+                      <Route path="staff" element={<AdminStaffPage />} />
+                      <Route path="audit-log" element={<AdminAuditLogPage />} />
+                      <Route path="settings" element={<AdminSettingsPage />} />
                       <Route path="blog" element={<BlogAdminPage />} />
                       <Route path="reading-plans" element={<ReadingPlansAdminPage />} />
                       <Route path="book-clubs" element={<BookClubsAdminPage />} />
@@ -149,6 +157,9 @@ function App() {
                       <Route path="deals" element={<DealsAdminPage />} />
                       <Route path="newsletter" element={<NewsletterAdminPage />} />
                     </Route>
+
+                    {/* Staff invite accept — outside admin layout, no auth required */}
+                    <Route path="accept-invite" element={<AcceptInvitePage />} />
                   </Routes>
                 </BrowserRouter>
                 </RealtimeProvider>
