@@ -41,7 +41,7 @@ const HomePage = () => {
     <div className="bg-white">
       <SEO 
         title="Home"
-        description="Ghana's leading bookshop and reading community. Shop the best textbooks, school supplies, and join our vibrant reading community."
+        description="Ghana's leading bookshop and reading community. Shop the best textbooks, stationery, and join our vibrant reading community."
         canonicalUrl="/"
       />
       <GlobalSearch />
