@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import Pagination from '../../components/admin/Pagination';
 
@@ -27,7 +27,7 @@ export default function UsersAdminPage() {
 
   const fetchUsers = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page, page_size: PAGE_SIZE });
+    const params = new URLSearchParams({ page, page_size: PAGE_SIZE, is_staff: 'false' });
     if (search) params.set('search', search);
     get(`/api/admin/users/?${params}`).then(data => {
       const list = Array.isArray(data) ? data : (data.results || []);

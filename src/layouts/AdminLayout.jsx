@@ -80,7 +80,7 @@ function AccessDenied() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center px-4">
-      <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-5">
+      <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-5"> 
         <svg width="28" height="28" fill="none" stroke="#F46B03" strokeWidth="1.8" viewBox="0 0 24 24">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
