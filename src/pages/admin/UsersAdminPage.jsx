@@ -6,11 +6,12 @@ const roleColors = { admin: 'bg-orange-100 text-orange-700', customer: 'bg-blue-
 const statusColors = { active: 'bg-green-100 text-green-700', suspended: 'bg-red-100 text-red-600', pending: 'bg-gray-100 text-gray-600' };
 
 export default function UsersAdminPage() {
-  const { get, put } = useAdmin();
+  const { get, put, del } = useAdmin();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [updating, setUpdating] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const PAGE_SIZE = 20;
@@ -44,10 +45,20 @@ export default function UsersAdminPage() {
     setUpdating(userId);
     const djangoPatch = {};
     if (patch.status !== undefined) djangoPatch.is_active = patch.status === 'active';
-    if (patch.role !== undefined) djangoPatch.is_staff = patch.role === 'admin';
     const updated = await put(`/api/admin/users/${userId}/`, djangoPatch);
     setUsers(prev => prev.map(u => u.id === updated.id ? normalizeUser(updated) : u));
     setUpdating(null);
+  };
+
+  const handleDelete = async (userId) => {
+    setUpdating(userId);
+    try {
+      await del(`/api/admin/users/${userId}/`);
+      fetchUsers(); // Re-fetch to update the list since deletion is soft-delete/anonymization
+    } finally {
+      setDeleteConfirm(null);
+      setUpdating(null);
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -72,7 +83,7 @@ export default function UsersAdminPage() {
           <p className="text-sm text-gray-500 mt-1">{totalCount} registered customers</p>
         </div>
         <button onClick={fetchUsers} disabled={loading} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30" title="Refresh">
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
         </button>
       </div>
 
@@ -126,11 +137,11 @@ export default function UsersAdminPage() {
                     <td className="px-3 py-3.5">
                       {user.isVerified ? (
                         <span className="text-green-500">
-                          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                         </span>
                       ) : (
                         <span className="text-gray-300">
-                          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                         </span>
                       )}
                     </td>
@@ -150,20 +161,19 @@ export default function UsersAdminPage() {
                             <button
                               onClick={() => handleUpdate(user.id, { status: 'suspended' })}
                               disabled={updating === user.id}
-                              className="text-xs font-medium px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                              className="text-xs font-medium px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-50"
                             >
                               Suspend
                             </button>
                           )}
-                          {user.role === 'customer' && (
-                            <button
-                              onClick={() => handleUpdate(user.id, { role: 'admin' })}
-                              disabled={updating === user.id}
-                              className="text-xs font-medium px-3 py-1.5 rounded-xl bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors disabled:opacity-50"
-                            >
-                              Make Admin
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setDeleteConfirm(user)}
+                            disabled={updating === user.id}
+                            className="text-xs font-medium px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                            title="Delete user"
+                          >
+                            Delete
+                          </button>
                         </div>
                       )}
                       {user.role === 'admin' && <span className="text-xs text-gray-300 italic">Protected</span>}
@@ -179,6 +189,36 @@ export default function UsersAdminPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg width="22" height="22" fill="none" stroke="#EF4444" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+            </div>
+            <h3 className="text-center font-bold text-gray-900 mb-2">Delete Account?</h3>
+            <p className="text-center text-sm text-gray-500 mb-6">
+              This will anonymize <strong>{deleteConfirm.name}</strong>'s data and deactivate the account. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 border border-gray-200 text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm.id)}
+                disabled={updating === deleteConfirm.id}
+                className="flex-1 bg-red-500 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-red-600 disabled:opacity-50"
+              >
+                {updating === deleteConfirm.id ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
