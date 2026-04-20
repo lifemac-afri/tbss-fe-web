@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useRealtime } from '../context/RealtimeContext';
 
 import logo from '../assets/logo/logo.png';
+
+// ... (NAV and AccessDenied stay same, skipping for brevity in thought but tool expects full ReplacementContent)
+// Wait, I should not skip. I'll provide the full content or use multi_replace.
+// I'll use replace_file_content for the imports and then another for the body.
+// Actually, I'll just do it in one go to be safe with the state.
 
 // superAdminOnly: true  →  hidden from nav + blocked for non-superadmins
 const NAV = [
@@ -17,7 +23,7 @@ const NAV = [
     )
   },
   {
-    to: '/admin/categories', label: 'Categories', superAdminOnly: true, icon: (
+    to: '/admin/genres', label: 'Genres', superAdminOnly: true, icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7" /></svg>
     )
   },
@@ -74,7 +80,7 @@ const NAV = [
 ];
 
 // Routes non-superadmins cannot access at all
-const SUPERADMIN_ONLY_ROUTES = ['/admin/categories'];
+const SUPERADMIN_ONLY_ROUTES = ['/admin/genres'];
 
 function AccessDenied() {
   const navigate = useNavigate();
@@ -102,9 +108,22 @@ function AccessDenied() {
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const notifRef = useRef(null);
   const { currentUser, isSuperAdmin, logout } = useAuth();
+  const { unreadCount, liveNotifications, markAllRead, loading: notifsLoading } = useRealtime();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifs(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -117,6 +136,18 @@ export default function AdminLayout() {
   // Derive display name + role badge
   const displayName = [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') || currentUser?.email || 'Admin';
   const roleBadge = isSuperAdmin ? { label: 'Superadmin', cls: 'bg-purple-500/20 text-purple-200' } : { label: 'Admin', cls: 'bg-orange-500/20 text-orange-200' };
+
+  const formatTime = (dateStr) => {
+    try {
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diff = Math.floor((now - date) / 1000);
+      if (diff < 60) return 'Just now';
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      return date.toLocaleDateString();
+    } catch (_) { return ''; }
+  };
 
   return (
     <div className="flex h-screen bg-[#F8F7F5] overflow-hidden font-poppins">
@@ -180,19 +211,95 @@ export default function AdminLayout() {
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <button
-            onClick={() => setSidebarOpen(v => !v)}
-            className="text-gray-400 hover:text-gray-700 transition-colors"
-          >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button>
-          <div className="flex items-center gap-3">
+        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between flex-shrink-0 relative">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(v => !v)}
+              className="text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-6">
             <a href="/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#F46B03] hover:underline font-medium">
               View Storefront ↗
             </a>
+
+            {/* Notifications */}
+            <div className="relative" ref={notifRef}>
+              <button 
+                onClick={() => setShowNotifs(!showNotifs)}
+                className="relative p-2 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95"
+              >
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#F46B03] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in duration-300">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifs && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+                    <h3 className="font-bold text-gray-900">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markAllRead}
+                        className="text-[11px] text-[#F46B03] hover:underline font-semibold"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {notifsLoading && liveNotifications.length === 0 ? (
+                      <div className="p-10 text-center text-gray-400 text-sm">Loading...</div>
+                    ) : liveNotifications.length === 0 ? (
+                      <div className="p-10 text-center text-gray-400">
+                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="opacity-20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+                        </div>
+                        <p className="text-xs">No recent notifications</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {liveNotifications.map((notif, i) => (
+                          <div 
+                            key={notif.id || i} 
+                            className={`p-4 transition-colors ${!notif.is_read ? 'bg-orange-50/30' : 'hover:bg-gray-50'}`}
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <p className={`text-sm ${!notif.is_read ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                {notif.title}
+                              </p>
+                              <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                                {formatTime(notif.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                              {notif.message}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3 bg-gray-50 text-center border-t border-gray-100">
+                    <button className="text-[11px] text-gray-500 font-medium hover:text-gray-900 transition-colors">
+                      View all alert history
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 

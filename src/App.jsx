@@ -47,7 +47,7 @@ import AccountSettingsPage from './pages/dashboard/AccountSettingsPage';
 
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
 import ProductsAdminPage from './pages/admin/ProductsAdminPage';
-import CategoriesAdminPage from './pages/admin/CategoriesAdminPage';
+import GenresAdminPage from './pages/admin/GenresAdminPage';
 import OrdersAdminPage from './pages/admin/OrdersAdminPage';
 import UsersAdminPage from './pages/admin/UsersAdminPage';
 import AdminStaffPage from './pages/admin/AdminStaffPage';
@@ -143,7 +143,7 @@ function App() {
                       <Route index element={<AdminOverviewPage />} />
                       <Route path="products" element={<ProductsAdminPage />} />
                       <Route path="reviews" element={<ReviewsAdminPage />} />
-                      <Route path="categories" element={<CategoriesAdminPage />} />
+                      <Route path="genres" element={<GenresAdminPage />} />
                       <Route path="orders" element={<OrdersAdminPage />} />
                       <Route path="customers" element={<UsersAdminPage />} />
                       <Route path="users" element={<UsersAdminPage />} />

@@ -10,6 +10,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { useAuth } from './AuthContext';
 import { useToast } from '../components/Toast';
 import { getPusherClient, disconnectPusher } from '../lib/pusher';
+import api from '../lib/api';
 
 const RealtimeContext = createContext(null);
 
@@ -29,23 +30,49 @@ export const RealtimeProvider = ({ children }) => {
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [liveNotifications, setLiveNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const channelRef = useRef(null);
   const adminChannelRef = useRef(null);
+
+  const fetchInitialData = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    try {
+      const data = await api.json('/api/notifications/');
+      setLiveNotifications(data.results || []);
+      setUnreadCount(data.unread_count || 0);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const addLiveNotification = useCallback((notif) => {
     setLiveNotifications(prev => [notif, ...prev].slice(0, 50));
     setUnreadCount(c => c + 1);
   }, []);
 
-  const markAllRead = useCallback(() => {
-    setUnreadCount(0);
-    setLiveNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  const markAllRead = useCallback(async () => {
+    try {
+      await api.post('/api/notifications/mark-read/');
+      setUnreadCount(0);
+      setLiveNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      console.error('Failed to mark notifications as read:', err);
+    }
   }, []);
 
   const setInitialUnread = useCallback((count) => {
     setUnreadCount(count);
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchInitialData();
+    }
+  }, [isAuthenticated, fetchInitialData]);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser?.id) {
@@ -103,10 +130,10 @@ export const RealtimeProvider = ({ children }) => {
       channelRef.current = null;
       adminChannelRef.current = null;
     };
-  }, [isAuthenticated, currentUser?.id, currentUser?.is_staff]);
+  }, [isAuthenticated, currentUser?.id, currentUser?.is_staff, addLiveNotification, toast]);
 
   return (
-    <RealtimeContext.Provider value={{ unreadCount, liveNotifications, markAllRead, setInitialUnread }}>
+    <RealtimeContext.Provider value={{ unreadCount, liveNotifications, markAllRead, setInitialUnread, loading }}>
       {children}
     </RealtimeContext.Provider>
   );
