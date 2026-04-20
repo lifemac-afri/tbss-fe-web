@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Package, Truck, CheckCircle, XCircle, Clock, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronUp, Package, Truck, CheckCircle, XCircle, Clock, MapPin, AlertCircle, CreditCard } from 'lucide-react';
 import api from '../../lib/api';
+import CheckoutSdk from '@hubteljs/checkout';
 
 const statusConfig = {
-  pending:          { label: 'Awaiting Payment', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', dot: 'bg-yellow-400' },
-  paid:             { label: 'Paid',             color: 'bg-green-50 text-green-700 border-green-100',  dot: 'bg-green-500' },
-  processing:       { label: 'Processing',       color: 'bg-blue-50 text-blue-700 border-blue-100',    dot: 'bg-blue-500'  },
-  shipped:          { label: 'Dispatched',        color: 'bg-amber-50 text-amber-700 border-amber-100', dot: 'bg-amber-500' },
+  pending: { label: 'Awaiting Payment', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', dot: 'bg-yellow-400' },
+  paid: { label: 'Paid', color: 'bg-green-50 text-green-700 border-green-100', dot: 'bg-green-500' },
+  processing: { label: 'Processing', color: 'bg-blue-50 text-blue-700 border-blue-100', dot: 'bg-blue-500' },
+  shipped: { label: 'Dispatched', color: 'bg-amber-50 text-amber-700 border-amber-100', dot: 'bg-amber-500' },
   ready_for_pickup: { label: 'Ready for Pickup', color: 'bg-purple-50 text-purple-700 border-purple-100', dot: 'bg-purple-500' },
-  delivered:        { label: 'Delivered',         color: 'bg-green-50 text-green-700 border-green-100', dot: 'bg-green-500' },
-  cancelled:        { label: 'Cancelled',         color: 'bg-red-50 text-red-600 border-red-100',      dot: 'bg-red-400'   },
+  delivered: { label: 'Delivered', color: 'bg-green-50 text-green-700 border-green-100', dot: 'bg-green-500' },
+  failed: { label: 'Payment Failed', color: 'bg-red-50 text-red-600 border-red-200', dot: 'bg-red-400' },
+  cancelled: { label: 'Cancelled', color: 'bg-red-50 text-red-600 border-red-100', dot: 'bg-red-400' },
 };
 
 const StatusBadge = ({ status }) => {
@@ -23,15 +25,19 @@ const StatusBadge = ({ status }) => {
 };
 
 const StatusIcon = ({ status }) => {
-  if (status === 'delivered')        return <CheckCircle size={18} className="text-green-500" />;
-  if (status === 'cancelled')        return <XCircle size={18} className="text-red-400" />;
-  if (status === 'shipped')          return <Truck size={18} className="text-amber-500" />;
-  if (status === 'pending')          return <Clock size={18} className="text-yellow-500" />;
+  if (status === 'delivered') return <CheckCircle size={18} className="text-green-500" />;
+  if (status === 'cancelled') return <XCircle size={18} className="text-red-400" />;
+  if (status === 'failed') return <AlertCircle size={18} className="text-red-400" />;
+  if (status === 'shipped') return <Truck size={18} className="text-amber-500" />;
+  if (status === 'pending') return <Clock size={18} className="text-yellow-500" />;
   return <Package size={18} className="text-blue-500" />;
 };
 
-const OrderCard = ({ order }) => {
+const OrderCard = ({ order, onStatusChange }) => {
   const [expanded, setExpanded] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState('');
+
   const itemCount = (order.items || []).reduce((s, i) => s + (i.quantity || 1), 0);
   const total = parseFloat(order.total_amount || 0);
   const dateStr = order.created_at
@@ -40,6 +46,44 @@ const OrderCard = ({ order }) => {
 
   const addr = order.shipping_address || {};
   const hasAddress = addr.name || addr.street || addr.city;
+  const canRetry = order.status === 'pending' || order.status === 'failed';
+
+  const handleRetryPayment = async () => {
+    setRetrying(true);
+    setRetryError('');
+    try {
+      const res = await api.post(`/api/orders/${order.id}/retry-payment/`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setRetryError(data.detail || 'Failed to initiate payment. Please try again.');
+        return;
+      }
+
+      const checkout = new CheckoutSdk();
+      checkout.openModal({
+        purchaseInfo: data.purchaseInfo,
+        config: data.config,
+        callBacks: {
+          onInit: () => { },
+          onPaymentSuccess: async () => {
+            try {
+              await api.post(`/api/orders/${order.id}/check-payment/`);
+            } catch (_) { }
+            onStatusChange(order.id, 'paid');
+          },
+          onPaymentFailure: () => {
+            onStatusChange(order.id, 'failed');
+          },
+          onClose: () => setRetrying(false),
+        },
+      });
+    } catch {
+      setRetryError('Something went wrong. Please try again.');
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -73,11 +117,34 @@ const OrderCard = ({ order }) => {
       {expanded && (
         <div className="border-t border-gray-100 p-4 lg:p-5 space-y-5">
 
-          {/* Pending payment notice */}
-          {order.status === 'pending' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-start gap-2 text-sm text-yellow-800">
-              <Clock size={16} className="flex-shrink-0 mt-0.5" />
-              <span>This order is awaiting payment confirmation. If you completed payment, it will update automatically.</span>
+          {/* Pending payment notice + retry */}
+          {canRetry && (
+            <div className={`rounded-xl p-4 ${order.status === 'failed' ? 'bg-red-50 border border-red-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+              <div className="flex items-start gap-2 mb-3">
+                {order.status === 'failed'
+                  ? <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                  : <Clock size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                }
+                <p className={`text-sm ${order.status === 'failed' ? 'text-red-800' : 'text-yellow-800'}`}>
+                  {order.status === 'failed'
+                    ? 'Your payment was not completed. You can retry payment for this order.'
+                    : 'This order is awaiting payment. Complete your payment to confirm the order.'
+                  }
+                </p>
+              </div>
+              {retryError && (
+                <p className="text-xs text-red-600 mb-2">{retryError}</p>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleRetryPayment(); }}
+                disabled={retrying}
+                className="w-full bg-[#F46B03] text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-[#C15300] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {retrying
+                  ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Processing…</>
+                  : <><CreditCard size={15} /> Pay Now</>
+                }
+              </button>
             </div>
           )}
 
@@ -139,9 +206,9 @@ const OrderCard = ({ order }) => {
                 <MapPin size={12} /> Delivery Address
               </p>
               <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-700 space-y-0.5">
-                {addr.name    && <p className="font-semibold">{addr.name}</p>}
-                {addr.phone   && <p className="text-gray-500">{addr.phone}</p>}
-                {addr.street  && <p>{addr.street}</p>}
+                {addr.name && <p className="font-semibold">{addr.name}</p>}
+                {addr.phone && <p className="text-gray-500">{addr.phone}</p>}
+                {addr.street && <p>{addr.street}</p>}
                 {(addr.city || addr.region) && (
                   <p>{[addr.city, addr.region].filter(Boolean).join(', ')}</p>
                 )}
@@ -175,20 +242,21 @@ const OrderCard = ({ order }) => {
 };
 
 const FILTER_OPTIONS = [
-  { label: 'All',             value: 'all'             },
-  { label: 'Awaiting Payment',value: 'pending'         },
-  { label: 'Paid',            value: 'paid'            },
-  { label: 'Processing',      value: 'processing'      },
-  { label: 'Dispatched',      value: 'shipped'         },
-  { label: 'Delivered',       value: 'delivered'       },
-  { label: 'Cancelled',       value: 'cancelled'       },
+  { label: 'All', value: 'all' },
+  { label: 'Awaiting Payment', value: 'pending' },
+  { label: 'Payment Failed', value: 'failed' },
+  { label: 'Paid', value: 'paid' },
+  { label: 'Processing', value: 'processing' },
+  { label: 'Dispatched', value: 'shipped' },
+  { label: 'Delivered', value: 'delivered' },
+  { label: 'Cancelled', value: 'cancelled' },
 ];
 
 const OrdersPage = () => {
-  const [orders, setOrders]   = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [filter, setFilter]   = useState('all');
+  const [error, setError] = useState('');
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     setLoading(true);
@@ -205,11 +273,14 @@ const OrdersPage = () => {
       });
   }, []);
 
+  const handleStatusChange = (orderId, newStatus) => {
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+  };
+
   const filtered = filter === 'all'
     ? orders
     : orders.filter(o => o.status === filter);
 
-  // Only show filter tabs that have at least one order (plus All)
   const activeTabs = FILTER_OPTIONS.filter(
     f => f.value === 'all' || orders.some(o => o.status === f.value)
   );
@@ -223,18 +294,17 @@ const OrdersPage = () => {
         </p>
       </div>
 
-      {/* Filter tabs — only show tabs that have orders */}
+      {/* Filter tabs */}
       {!loading && orders.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {activeTabs.map(f => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                filter === f.value
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${filter === f.value
                   ? 'bg-[#F46B03] text-white border-[#F46B03]'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-[#F46B03] hover:text-[#F46B03]'
-              }`}
+                }`}
             >
               {f.label}
             </button>
@@ -273,7 +343,7 @@ const OrdersPage = () => {
       ) : (
         <div className="space-y-3">
           {filtered.map(order => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard key={order.id} order={order} onStatusChange={handleStatusChange} />
           ))}
         </div>
       )}
