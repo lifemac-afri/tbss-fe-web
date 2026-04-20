@@ -5,7 +5,7 @@ const SEO = ({ title, description, keywords, ogImage, ogType, canonicalUrl }) =>
   const siteTitle = "Torchbearers Books and Stationery Services";
   const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
   const defaultDescription = "Ghana's leading bookshop and reading community. High-quality textbooks, stationery, and a vibrant community of readers.";
-  const defaultKeywords = "bookshop, reading community, books ghana, school supplies, stationery";
+  const defaultKeywords = "bookshop, reading community, books ghana, stationery, stationery services, education";
   const defaultOgImage = "/og.png";
   const defaultOgType = "website";
   const siteUrl = "https://tbssgh.com";

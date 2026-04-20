@@ -441,6 +441,29 @@ export default function ProductsAdminPage() {
   const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); };
   const handleCatFilterChange = (e) => { setCatFilter(e.target.value); setPage(1); };
   const handleStockFilterChange = (e) => { setStockFilter(e.target.value); setPage(1); };
+  
+  const handleExport = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (catFilter !== 'All') params.set('category_name', catFilter);
+      if (stockFilter === 'Out-of-stock') params.set('stock_status', 'out');
+      else if (stockFilter === 'Low-stock') params.set('stock_status', 'low');
+      else if (stockFilter === 'In-stock') params.set('stock_status', 'in');
+
+      const res = await api.get(`/api/admin/products/export-all/?${params}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Failed to export products.');
+    }
+  };
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -467,6 +490,13 @@ export default function ProductsAdminPage() {
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Bulk Import
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 border border-gray-200 text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Products
           </button>
           <button
             onClick={openAdd}
