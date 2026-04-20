@@ -9,7 +9,7 @@ const banners = [
     buttonText: "Shop Now",
     image: covImage,
     bgColor: "bg-[#0A4D4A]",
-    href: "/shop?sort=newest",
+    href: "/shop?sort=new",
   },
   {
     title: "Today's",
@@ -17,7 +17,7 @@ const banners = [
     buttonText: "Shop Now",
     image: covImage,
     bgColor: "bg-[#8B7D5B]",
-    href: "/shop?deals=true",
+    href: "/shop?sort=deals",
   },
 ];
 
