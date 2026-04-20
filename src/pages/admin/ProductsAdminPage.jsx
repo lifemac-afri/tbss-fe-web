@@ -16,7 +16,7 @@ const stockColor = {
 };
 
 const emptyForm = {
-  title: '', author: '', category: '', genre: '', price: '', oldPrice: '',
+  title: '', author: '', genre: '', price: '', oldPrice: '',
   stock: '', tag: 'Paperback', featured: false, coverImage: '', description: '',
   publisher: '', pages: '', language: 'English', isbn: '',
 };
@@ -178,7 +178,7 @@ function BulkUploadModal({ onClose, onImported }) {
     }
   };
 
-  const REQUIRED = ['title', 'price', 'stock_quantity', 'category'];
+  const REQUIRED = ['title', 'price', 'stock_quantity'];
   const OPTIONAL = ['author', 'description', 'old_price', 'genre', 'sub_genre', 'tag', 'is_featured', 'is_bestseller', 'is_new_release', 'image', 'publisher', 'pages', 'language', 'isbn'];
 
   return (
@@ -187,7 +187,7 @@ function BulkUploadModal({ onClose, onImported }) {
         <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
           <div>
             <h2 className="font-bold text-gray-900">Bulk Import Products</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Categories, genres and sub-genres are created automatically from names</p>
+            <p className="text-xs text-gray-400 mt-0.5">Genres and sub-genres are created automatically from names</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -201,7 +201,7 @@ function BulkUploadModal({ onClose, onImported }) {
             <div className="flex-1">
               <p className="text-sm font-semibold text-blue-800 mb-0.5">Step 1 — Download the template</p>
               <p className="text-xs text-blue-600 mb-2">
-                Use category, genre, and sub_genre <strong>names</strong> — they will be created automatically if they don't exist yet. Upload cover images to Cloudinary first and paste URLs in the <code className="bg-blue-100 px-1 rounded">image</code> column.
+                Use genre and sub_genre <strong>names</strong> — they will be created automatically if they don't exist yet. Upload cover images to Cloudinary first and paste URLs in the <code className="bg-blue-100 px-1 rounded">image</code> column.
               </p>
               <button onClick={downloadTemplate} className="text-xs font-semibold text-blue-700 underline hover:text-blue-900">
                 Download tbss_product_template.csv ↓
@@ -229,7 +229,7 @@ function BulkUploadModal({ onClose, onImported }) {
             </div>
             <div className="border-t border-gray-200 pt-3">
               <p className="text-xs text-gray-500 leading-relaxed">
-                <span className="font-semibold text-gray-700">Auto-creation:</span> If <code className="bg-gray-200 px-1 rounded text-[11px]">category</code>, <code className="bg-gray-200 px-1 rounded text-[11px]">genre</code>, or <code className="bg-gray-200 px-1 rounded text-[11px]">sub_genre</code> names don't exist in the database, they will be created automatically. Matching is case-insensitive (e.g. "fiction" matches "Fiction").
+                <span className="font-semibold text-gray-700">Auto-creation:</span> If <code className="bg-gray-200 px-1 rounded text-[11px]">genre</code> or <code className="bg-gray-200 px-1 rounded text-[11px]">sub_genre</code> names don't exist in the database, they will be created automatically. Matching is case-insensitive (e.g. "fiction" matches "Fiction").
               </p>
             </div>
           </div>
@@ -268,14 +268,9 @@ function BulkUploadModal({ onClose, onImported }) {
               </p>
 
               {/* Auto-created taxonomy */}
-              {(result.new_categories?.length > 0 || result.new_genres?.length > 0 || result.new_sub_genres?.length > 0) && (
+              {(result.new_genres?.length > 0 || result.new_sub_genres?.length > 0) && (
                 <div className="bg-white/60 rounded-lg p-3 space-y-1.5">
                   <p className="text-xs font-semibold text-gray-700">Auto-created during import:</p>
-                  {result.new_categories?.length > 0 && (
-                    <p className="text-xs text-gray-600">
-                      <span className="font-medium text-orange-700">Categories:</span> {result.new_categories.join(', ')}
-                    </p>
-                  )}
                   {result.new_genres?.length > 0 && (
                     <p className="text-xs text-gray-600">
                       <span className="font-medium text-blue-700">Genres:</span> {result.new_genres.join(', ')}
@@ -319,12 +314,12 @@ function BulkUploadModal({ onClose, onImported }) {
 export default function ProductsAdminPage() {
   const { get, post, put, del } = useAdmin();
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [catFilter, setCatFilter] = useState('All');
+  const [genreFilter, setGenreFilter] = useState('All');
   const [stockFilter, setStockFilter] = useState('All');
+  const [ordering, setOrdering] = useState('-created_at');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -342,21 +337,20 @@ export default function ProductsAdminPage() {
     stockStatus: (p.stock_quantity ?? p.stock ?? 0) === 0 ? 'Out-of-stock' : ((p.stock_quantity ?? p.stock ?? 0) <= 5 ? 'Low-stock' : 'In-stock'),
     featured: p.is_featured ?? p.featured ?? false,
     oldPrice: p.old_price || p.oldPrice || '',
-    genre: p.genre_name || p.genre || '',
-    category: p.category_name || p.category || '',
+    genre: p.genre_name || p.genre?.name || p.genre || '',
     tag: p.tag || '',
-    categoryId: p.category ?? '',
-    genreId: p.genre ?? '',
+    genreId: p.genre?.id ?? p.genre ?? '',
   });
 
   const fetchProducts = useCallback(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page, page_size: PAGE_SIZE });
+    const params = new URLSearchParams({ page, page_size: PAGE_SIZE, ordering });
     if (search) params.set('search', search);
-    if (catFilter !== 'All') params.set('category_name', catFilter);
+    if (genreFilter !== 'All') params.set('genre_name', genreFilter);
     if (stockFilter === 'Out-of-stock') params.set('stock_status', 'out');
     else if (stockFilter === 'Low-stock') params.set('stock_status', 'low');
     else if (stockFilter === 'In-stock') params.set('stock_status', 'in');
+
     get(`/api/admin/products/?${params}`).then(data => {
       const list = Array.isArray(data) ? data : (data.results || []);
       const count = Array.isArray(data) ? list.length : (data.count || list.length);
@@ -364,27 +358,20 @@ export default function ProductsAdminPage() {
       setTotalCount(count);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [get, page, search, catFilter, stockFilter]);
+  }, [get, page, search, genreFilter, stockFilter, ordering]);
 
   const loadProducts = fetchProducts;
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   useEffect(() => {
-    get('/api/admin/categories/?page_size=200').then(data => {
-      setCategories(Array.isArray(data) ? data : (data.results || []));
-    });
-    get('/api/admin/genres/?page_size=200').then(data => {
+    get('/api/admin/genres/?page_size=500').then(data => {
       setGenres(Array.isArray(data) ? data : (data.results || []));
     });
   }, []);
 
-  const selectedCatId = categories.find(c => c.name === form.category)?.id;
-  const filteredGenres = genres.filter(g => g.category?.id === selectedCatId || g.category === selectedCatId);
-
   const openAdd = () => {
-    const defaultCat = categories[0]?.name || '';
-    setForm({ ...emptyForm, category: defaultCat });
+    setForm({ ...emptyForm });
     setModal('add');
   };
   const openEdit = (p) => { setForm({ ...emptyForm, ...p, coverImage: p.coverImage || '' }); setModal(p); };
@@ -392,7 +379,6 @@ export default function ProductsAdminPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    const catId = categories.find(c => c.name === form.category)?.id;
     const genreId = genres.find(g => g.name === form.genre)?.id || null;
 
     const payload = {
@@ -410,7 +396,6 @@ export default function ProductsAdminPage() {
       is_featured: form.featured,
       is_active: true,
       tag: form.tag,
-      ...(catId && { category: catId }),
       ...(genreId && { genre: genreId }),
     };
 
@@ -420,7 +405,7 @@ export default function ProductsAdminPage() {
         fetchProducts();
       } else {
         const updated = await put(`/api/admin/products/${modal.id}/`, payload);
-        if (search || catFilter !== 'All' || stockFilter !== 'All') {
+        if (search || genreFilter !== 'All' || stockFilter !== 'All') {
           fetchProducts();
         } else {
           setProducts(prev => prev.map(p => p.id === updated.id ? normalizeProduct(updated) : p));
@@ -439,14 +424,30 @@ export default function ProductsAdminPage() {
   };
 
   const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); };
-  const handleCatFilterChange = (e) => { setCatFilter(e.target.value); setPage(1); };
+  const handleGenreFilterChange = (e) => { setGenreFilter(e.target.value); setPage(1); };
   const handleStockFilterChange = (e) => { setStockFilter(e.target.value); setPage(1); };
+
+  const handleSort = (field) => {
+    setOrdering(prev => (prev === field ? `-${field}` : field));
+    setPage(1);
+  };
+
+  const SortIcon = ({ field }) => {
+    const isActive = ordering === field || ordering === `-${field}`;
+    const isDesc = ordering === `-${field}`;
+    if (!isActive) return (
+      <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="opacity-20 group-hover:opacity-50 ml-1.5 transition-opacity"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>
+    );
+    return isDesc 
+      ? <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" className="ml-1.5 text-[#F46B03]"><path d="M7 10l5 5 5-5"/></svg>
+      : <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" className="ml-1.5 text-[#F46B03]"><path d="M7 14l5-5 5 5"/></svg>;
+  };
   
   const handleExport = async () => {
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
-      if (catFilter !== 'All') params.set('category_name', catFilter);
+      if (genreFilter !== 'All') params.set('genre_name', genreFilter);
       if (stockFilter === 'Out-of-stock') params.set('stock_status', 'out');
       else if (stockFilter === 'Low-stock') params.set('stock_status', 'low');
       else if (stockFilter === 'In-stock') params.set('stock_status', 'in');
@@ -469,8 +470,8 @@ export default function ProductsAdminPage() {
 
   const f = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
-  const catColor = Object.fromEntries(
-    categories.map((c, i) => [c.name, ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-teal-100 text-teal-700', 'bg-pink-100 text-pink-700'][i % 4]])
+  const genreColor = Object.fromEntries(
+    genres.map((g, i) => [g.name, ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-teal-100 text-teal-700', 'bg-pink-100 text-pink-700'][i % 4]])
   );
 
   return (
@@ -516,9 +517,9 @@ export default function ProductsAdminPage() {
           onChange={handleSearchChange}
           className="flex-1 min-w-48 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-[#F46B03]"
         />
-        <select value={catFilter} onChange={handleCatFilterChange} className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#F46B03]">
-          <option value="All">All Categories</option>
-          {categories.map(c => <option key={c.id}>{c.name}</option>)}
+        <select value={genreFilter} onChange={handleGenreFilterChange} className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#F46B03]">
+          <option value="All">All Genres</option>
+          {genres.map(g => <option key={g.id}>{g.name}</option>)}
         </select>
         <select value={stockFilter} onChange={handleStockFilterChange} className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#F46B03]">
           <option value="All">All Stock</option>
@@ -537,12 +538,24 @@ export default function ProductsAdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left">
-                  <th className="px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Product</th>
-                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Category</th>
-                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Price</th>
-                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock</th>
-                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
-                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Featured</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    <button onClick={() => handleSort('title')} className="flex items-center group hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors cursor-pointer text-left w-full">
+                      Product <SortIcon field="title" />
+                    </button>
+                  </th>
+                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Genre</th>
+                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    <button onClick={() => handleSort('price')} className="flex items-center group hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors cursor-pointer text-left w-full">
+                      Price <SortIcon field="price" />
+                    </button>
+                  </th>
+                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    <button onClick={() => handleSort('stock_quantity')} className="flex items-center group hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors cursor-pointer text-left w-full">
+                      Stock <SortIcon field="stock_quantity" />
+                    </button>
+                  </th>
+                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide text-left">Status</th>
+                  <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide text-left">Featured</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Actions</th>
                 </tr>
               </thead>
@@ -565,7 +578,7 @@ export default function ProductsAdminPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3.5">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${catColor[p.category] || 'bg-gray-100 text-gray-600'}`}>{p.category}</span>
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${genreColor[p.genre] || 'bg-gray-100 text-gray-600'}`}>{p.genre}</span>
                     </td>
                     <td className="px-3 py-3.5">
                       <span className="font-semibold text-gray-900">₵{p.price}</span>
@@ -626,21 +639,12 @@ export default function ProductsAdminPage() {
                 <input value={form.author} onChange={f('author')} placeholder="Author or brand" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Category *</label>
-                <select value={form.category} onChange={f('category')} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]">
-                  <option value="">Select category</option>
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Genre</label>
+                <select value={form.genre} onChange={f('genre')} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]">
+                  <option value="">Select genre</option>
+                  {genres.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                 </select>
               </div>
-              {filteredGenres.length > 0 && (
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Genre</label>
-                  <select value={form.genre} onChange={f('genre')} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]">
-                    <option value="">Select genre</option>
-                    {filteredGenres.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
-                  </select>
-                </div>
-              )}
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Tag / Format</label>
                 <select value={form.tag} onChange={f('tag')} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]">
