@@ -46,6 +46,11 @@ const RegisterPage = () => {
 
   const { register, resendVerification } = useAuth();
 
+  const handleGoogleSignup = () => {
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    window.location.href = `${apiBase}/api/auth/social/login/google-oauth2/`;
+  };
+
   const validate = () => {
     const newErrors = {};
     if (!form.name.trim()) newErrors.name = 'Full name is required';
@@ -164,6 +169,7 @@ const RegisterPage = () => {
 
         <button
           type="button"
+          onClick={handleGoogleSignup}
           className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-lg py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors mb-5"
         >
           {GOOGLE_ICON}
