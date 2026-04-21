@@ -22,6 +22,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    const handleExpired = () => { _setUser(null); api.setToken(null); };
+    window.addEventListener('auth:expired', handleExpired);
+    return () => window.removeEventListener('auth:expired', handleExpired);
+  }, []);
+
+  useEffect(() => {
     const token = api.getToken();
     if (!token && !currentUser) {
       setIsLoading(false);
