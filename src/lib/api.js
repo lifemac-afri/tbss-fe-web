@@ -78,6 +78,8 @@ async function request(path, options = {}) {
         credentials: 'include',
         headers,
       });
+    } else {
+      window.dispatchEvent(new CustomEvent('auth:expired'));
     }
   }
 
