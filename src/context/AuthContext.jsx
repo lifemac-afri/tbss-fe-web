@@ -7,7 +7,7 @@ const USER_KEY = 'tbss_user';
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch { return null; }
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -17,8 +17,8 @@ export const AuthProvider = ({ children }) => {
 
   const _setUser = (user) => {
     setCurrentUser(user);
-    if (user) sessionStorage.setItem(USER_KEY, JSON.stringify(user));
-    else sessionStorage.removeItem(USER_KEY);
+    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+    else localStorage.removeItem(USER_KEY);
   };
 
   useEffect(() => {
@@ -29,6 +29,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = api.getToken();
+    // Always attempt refresh when we know a user exists but have no in-memory token
+    // (e.g. new tab opened, page reloaded). The httpOnly refresh_token cookie handles auth.
     if (!token && !currentUser) {
       setIsLoading(false);
       return;

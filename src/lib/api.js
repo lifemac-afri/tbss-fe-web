@@ -21,6 +21,7 @@ async function refreshAccessToken() {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
   })
     .then(async (res) => {
       if (!res.ok) {
