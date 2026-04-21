@@ -28,7 +28,7 @@ const footerLinks = {
   Shop: [
     { label: 'All Books', href: '/shop' },
     { label: 'Bestsellers', href: '/shop?sort=bestsellers' },
-    { label: 'New Releases', href: '/shop?sort=newest' },
+    { label: 'New Releases', href: '/shop?sort=new' },
     { label: 'Stationery', href: '/shop?category=stationery' },
     { label: 'Games', href: '/shop?category=games' },
   ],
