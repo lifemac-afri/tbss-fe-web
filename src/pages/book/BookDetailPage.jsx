@@ -25,7 +25,6 @@ const StarRating = ({ rating, size = 16 }) => {
   );
 };
 
-const FORMAT_MULTIPLIERS = { Paperback: 1, Hardcover: 1.22, eBook: 0.58 };
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -37,7 +36,6 @@ const BookDetailPage = () => {
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedFormat, setSelectedFormat] = useState('Paperback');
   const [qty, setQty] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
 
@@ -90,7 +88,6 @@ const BookDetailPage = () => {
       .then((data) => {
         const normalized = normalizeProduct(data);
         setBook(normalized);
-        setSelectedFormat(normalized.tag || 'Paperback');
         const rel = (data.related_products || []).map(normalizeProduct);
         setRelated(rel.slice(0, 5));
         setLoading(false);
@@ -140,14 +137,8 @@ const BookDetailPage = () => {
     );
   }
 
-  const formats = [
-    { label: 'Paperback', price: Math.round(book.price * FORMAT_MULTIPLIERS.Paperback) },
-    { label: 'Hardcover', price: Math.round(book.price * FORMAT_MULTIPLIERS.Hardcover) },
-    { label: 'eBook', price: Math.round(book.price * FORMAT_MULTIPLIERS.eBook) },
-  ];
-  const activeFormat = formats.find((f) => f.label === selectedFormat) || formats[0];
-  const displayPrice = activeFormat.price;
-  const displayOldPrice = book.oldPrice ? Math.round(book.oldPrice * (FORMAT_MULTIPLIERS[selectedFormat] || 1)) : null;
+  const displayPrice = book.price;
+  const displayOldPrice = book.oldPrice;
   const saved = isInWishlist(book.id);
 
   const stockColors = {
@@ -158,7 +149,7 @@ const BookDetailPage = () => {
 
   const handleAddToCart = () => {
     if (book.stockStatus === 'Out of stock') return;
-    const bookForCart = { ...book, price: displayPrice, tag: selectedFormat };
+    const bookForCart = { ...book, price: displayPrice };
     addToCart(bookForCart, qty);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
@@ -250,25 +241,6 @@ const BookDetailPage = () => {
               {book.stockStatus}
             </span>
 
-            {/* Format selector */}
-            <div className="mb-5">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Format</p>
-              <div className="flex gap-2 flex-wrap">
-                {formats.map((f) => (
-                  <button
-                    key={f.label}
-                    onClick={() => setSelectedFormat(f.label)}
-                    className={`px-4 py-2 rounded-xl border text-sm font-medium transition-colors ${
-                      selectedFormat === f.label
-                        ? 'border-[#F46B03] bg-orange-50 text-[#F46B03]'
-                        : 'border-gray-200 text-gray-600 hover:border-[#F46B03]'
-                    }`}
-                  >
-                    {f.label} · ₵{f.price}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Price */}
             <div className="flex items-baseline gap-3 mb-5">
@@ -306,10 +278,8 @@ const BookDetailPage = () => {
               </button>
             </div>
 
-            {/* Trust signals */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-6">
               {[
-                { icon: <Truck size={16} />, text: 'Free delivery over ₵200' },
                 { icon: <RotateCcw size={16} />, text: '30-day returns' },
                 { icon: <Shield size={16} />, text: 'Secure checkout' },
               ].map((item, i) => (
@@ -335,7 +305,6 @@ const BookDetailPage = () => {
                 {book.isbn && <><dt className="text-gray-500">ISBN</dt><dd className="font-medium text-gray-700">{book.isbn}</dd></>}
                 {book.genre && <><dt className="text-gray-500">Genre</dt><dd className="font-medium text-gray-700">{book.genre}</dd></>}
                 {book.category && <><dt className="text-gray-500">Category</dt><dd className="font-medium text-gray-700">{book.category}</dd></>}
-                <dt className="text-gray-500">Format</dt><dd className="font-medium text-gray-700">{selectedFormat}</dd>
               </dl>
             </div>
           </div>

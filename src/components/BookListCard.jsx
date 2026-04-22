@@ -4,18 +4,18 @@ import paperbackIcon from '../assets/icons/paperback.svg';
 import hardcoverIcon from '../assets/icons/hardcover.svg';
 
 const BookListCard = ({
-  title = "Book Title",
-  author = "Author Name",
-  rating = 4.3,
-  reviews = 0,
-  price = 0,
+  title,
+  author,
+  rating,
+  reviews,
+  price,
   oldPrice,
   discount,
-  tag = "Paperback",
+  tag,
   genre,
   inStock,
   stockStatus,
-  coverImage = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop"
+  coverImage,
 }) => {
   const isInStock = inStock !== undefined ? inStock : stockStatus === 'In-stock';
   return (

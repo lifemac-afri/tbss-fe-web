@@ -426,64 +426,66 @@ const ShopPage = () => {
               )}
 
               {/* Title + Search + Sort + View controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-                <div>
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+                <div className="flex-shrink-0 min-h-[48px]">
                   <h1 className="text-xl font-bold text-gray-900 font-poppins">{pageTitle}</h1>
-                  {!loading && (
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      {total} {total === 1 ? 'result' : 'results'}
-                    </p>
-                  )}
+                  <p className="text-sm text-gray-500 mt-0.5 h-5">
+                    {!loading ? `${total} ${total === 1 ? 'result' : 'results'}` : ''}
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={searchText}
-                      onChange={(e) => { setSearchText(e.target.value); setPage(1); }}
-                      placeholder="Search books…"
-                      className="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white outline-none focus:border-[#F46B03] w-44"
-                    />
+                <div className="flex flex-wrap items-center gap-2 w-full lg:flex-1 lg:justify-end min-w-0">
+                  {/* Search bar & Filter group - fills space and stays together on mobile */}
+                  <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+                    <div className="relative flex-1">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={searchText}
+                        onChange={(e) => { setSearchText(e.target.value); setPage(1); }}
+                        placeholder="Search books…"
+                        className="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white outline-none focus:border-[#F46B03] w-full"
+                      />
+                    </div>
+
+                    {/* Mobile filter button - grouped with search bar */}
+                    <button
+                      onClick={() => setFiltersOpen(true)}
+                      className="lg:hidden flex items-center gap-2 h-9 px-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-[#F46B03] transition-colors"
+                    >
+                      <SlidersHorizontal size={15} />
+                      <span className="hidden sm:inline">Filters</span>
+                      {activeFilterCount > 0 && (
+                        <span className="w-5 h-5 rounded-full bg-[#F46B03] text-white text-[10px] flex items-center justify-center font-bold">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </button>
                   </div>
 
-                  {/* Mobile filter button */}
-                  <button
-                    onClick={() => setFiltersOpen(true)}
-                    className="lg:hidden flex items-center gap-2 h-9 px-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-[#F46B03] transition-colors"
-                  >
-                    <SlidersHorizontal size={15} />
-                    Filters
-                    {activeFilterCount > 0 && (
-                      <span className="w-5 h-5 rounded-full bg-[#F46B03] text-white text-[10px] flex items-center justify-center font-bold">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </button>
+                  {/* Sort & View controls - will wrap together if space is tight */}
+                  <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                    <select
+                      value={sort}
+                      onChange={(e) => { setSort(e.target.value); setPage(1); }}
+                      className="h-9 px-3 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 outline-none focus:border-[#F46B03] cursor-pointer"
+                    >
+                      {sortOptions.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
 
-                  {/* Sort */}
-                  <select
-                    value={sort}
-                    onChange={(e) => { setSort(e.target.value); setPage(1); }}
-                    className="h-9 px-3 border border-gray-200 rounded-lg text-sm bg-white text-gray-700 outline-none focus:border-[#F46B03] cursor-pointer"
-                  >
-                    {sortOptions.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-
-                  {/* View toggle */}
-                  <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg p-1">
-                    <button onClick={() => setViewMode('grid')}
-                      className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[#F46B03] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
-                      <LayoutGrid size={15} />
-                    </button>
-                    <button onClick={() => setViewMode('list')}
-                      className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-[#F46B03] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
-                      <List size={15} />
-                    </button>
+                    {/* View toggle */}
+                    <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg p-1">
+                      <button onClick={() => setViewMode('grid')}
+                        className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-[#F46B03] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+                        <LayoutGrid size={15} />
+                      </button>
+                      <button onClick={() => setViewMode('list')}
+                        className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-[#F46B03] text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+                        <List size={15} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

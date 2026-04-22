@@ -10,11 +10,11 @@ import bookmarkActiveIcon from '../assets/icons/bookmark_active.svg';
 
 const BookCard = ({
   id,
-  title = "Nearly All The Men In Lagos Are Mad",
-  author = "Damilare Kuku",
-  rating = 4.3,
-  reviews = 271,
-  price = 145,
+  title,
+  author,
+  rating,
+  reviews,
+  price,
   oldPrice,
   discount,
   tag = "Paperback",
