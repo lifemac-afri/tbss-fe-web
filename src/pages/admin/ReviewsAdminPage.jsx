@@ -156,7 +156,7 @@ export default function ReviewsAdminPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div data-tour="reviews-list" className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Toolbar */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">

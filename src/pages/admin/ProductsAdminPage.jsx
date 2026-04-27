@@ -500,6 +500,7 @@ export default function ProductsAdminPage() {
             Export Products
           </button>
           <button
+            data-tour="products-add-btn"
             onClick={openAdd}
             className="flex items-center gap-2 bg-[#F46B03] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#C15300] transition-colors"
           >
@@ -510,7 +511,7 @@ export default function ProductsAdminPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex flex-wrap gap-3">
+      <div data-tour="products-search" className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex flex-wrap gap-3">
         <input
           placeholder="Search by title or author…"
           value={search}
@@ -528,7 +529,7 @@ export default function ProductsAdminPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div data-tour="products-list" className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <div className="w-8 h-8 border-2 border-[#F46B03] border-t-transparent rounded-full animate-spin" />

@@ -498,7 +498,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div data-tour="settings-tabs" className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
         {TABS.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
