@@ -1,9 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { TourProvider, useTour } from '@reactour/tour';
 import { useAuth } from '../context/AuthContext';
 import { useRealtime } from '../context/RealtimeContext';
+import AdminTourController from '../components/AdminTourController';
+import { adminSteps } from '../tours/adminSteps';
 
 import logo from '../assets/logo/logo.png';
+
+const tourStyles = {
+  popover: (base) => ({
+    ...base,
+    borderRadius: '16px',
+    padding: '20px 24px 16px',
+    maxWidth: '340px',
+    boxShadow: '0 20px 60px -10px rgba(0,0,0,0.2)',
+  }),
+  badge: (base) => ({ ...base, background: '#F46B03', fontFamily: 'Poppins, sans-serif' }),
+  dot: (base, state) => ({
+    ...base,
+    background: state?.current ? '#F46B03' : '#e5e7eb',
+    width: 7,
+    height: 7,
+  }),
+  close: (base) => ({ ...base, color: '#9ca3af' }),
+};
+
+function TourStartButton() {
+  const { setIsOpen, setCurrentStep } = useTour();
+  return (
+    <button
+      onClick={() => { setCurrentStep(0); setIsOpen(true); }}
+      title="Start guided tour"
+      className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#F46B03] border border-gray-200 hover:border-[#F46B03] rounded-xl px-3 py-2 transition-all"
+    >
+      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
+      </svg>
+      Tour
+    </button>
+  );
+}
 
 // ... (NAV and AccessDenied stay same, skipping for brevity in thought but tool expects full ReplacementContent)
 // Wait, I should not skip. I'll provide the full content or use multi_replace.
@@ -150,9 +187,11 @@ export default function AdminLayout() {
   };
 
   return (
+    <TourProvider steps={adminSteps} styles={tourStyles} showBadge showDots padding={{ mask: 6 }}>
+      <AdminTourController />
     <div className="flex h-screen bg-[#F8F7F5] overflow-hidden font-poppins">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} flex-shrink-0 bg-black flex flex-col transition-all duration-200`}>
+      <aside data-tour="admin-sidebar" className={`${sidebarOpen ? 'w-56' : 'w-16'} flex-shrink-0 bg-black flex flex-col transition-all duration-200`}>
         {/* Logo */}
         <div className={`flex items-center gap-3 px-4 py-5 border-b border-white/10 ${!sidebarOpen ? 'justify-center' : ''}`}>
           <div className="px-1 py-1 bg-white rounded-lg flex items-center justify-center flex-shrink-0 w-full">
@@ -223,14 +262,16 @@ export default function AdminLayout() {
             </button>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            <TourStartButton />
             <a href="/" target="_blank" rel="noopener noreferrer" className="text-xs text-[#F46B03] hover:underline font-medium">
               View Storefront ↗
             </a>
 
             {/* Notifications */}
             <div className="relative" ref={notifRef}>
-              <button 
+              <button
+                data-tour="notifications-bell"
                 onClick={() => setShowNotifs(!showNotifs)}
                 className="relative p-2 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-700 transition-all active:scale-95"
               >
@@ -309,5 +350,6 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
+    </TourProvider>
   );
 }
