@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingBag, BookOpen, Users, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, BookOpen, Users, ChevronRight, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Badge from '../../components/Badge';
 import api from '../../lib/api';
@@ -13,7 +13,7 @@ const statusVariant = {
   ready_for_pickup: 'info',
   delivered:        'success',
   cancelled:        'danger',
-  failed:           'default',
+  failed:           'danger',
 };
 
 const statusLabel = {
@@ -24,11 +24,12 @@ const statusLabel = {
   ready_for_pickup: 'Ready for Pickup',
   delivered:        'Delivered',
   cancelled:        'Cancelled',
-  failed:           'Failed',
+  failed:           'Payment Failed',
 };
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const firstName = currentUser?.first_name || currentUser?.name?.split(' ')[0] || 'Reader';
   const [recentOrders, setRecentOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -89,21 +90,41 @@ const DashboardPage = () => {
               <Link to="/shop" className="text-sm text-[#F46B03] hover:underline mt-1 block">Browse the shop →</Link>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-gray-50">
               {recentOrders.map((order) => {
                 const itemCount = (order.items || []).reduce((s, i) => s + (i.quantity || 1), 0);
+                const needsPayment = order.status === 'pending' || order.status === 'failed';
                 return (
-                  <div key={order.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 font-mono">#{String(order.id).slice(0, 8).toUpperCase()}</p>
-                      <p className="text-xs text-gray-400">{formatDate(order.created_at)} · {itemCount} item{itemCount !== 1 ? 's' : ''}</p>
+                  <div key={order.id} className="py-3 last:pb-0">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 font-mono">#{String(order.id).slice(0, 8).toUpperCase()}</p>
+                        <p className="text-xs text-gray-400">{formatDate(order.created_at)} · {itemCount} item{itemCount !== 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-gray-900">₵{parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                        <Badge variant={statusVariant[order.status] || 'default'}>
+                          {statusLabel[order.status] || order.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-900">₵{parseFloat(order.total_amount || 0).toFixed(2)}</span>
-                      <Badge variant={statusVariant[order.status] || 'default'}>
-                        {statusLabel[order.status] || order.status}
-                      </Badge>
-                    </div>
+                    {needsPayment && (
+                      <div className={`mt-2 flex items-center justify-between rounded-xl px-3 py-2 ${order.status === 'failed' ? 'bg-red-50' : 'bg-yellow-50'}`}>
+                        <span className="flex items-center gap-1.5 text-xs text-gray-600">
+                          {order.status === 'failed'
+                            ? <AlertCircle size={13} className="text-red-500" />
+                            : <Clock size={13} className="text-yellow-500" />
+                          }
+                          {order.status === 'failed' ? 'Payment failed' : 'Payment pending'}
+                        </span>
+                        <button
+                          onClick={() => navigate('/dashboard/orders')}
+                          className="text-xs font-semibold text-[#F46B03] hover:underline"
+                        >
+                          Pay Now →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}

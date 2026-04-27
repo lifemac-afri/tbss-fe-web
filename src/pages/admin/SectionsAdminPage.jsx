@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import Pagination from '../../components/admin/Pagination';
 
@@ -78,13 +78,23 @@ export default function SectionsAdminPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
-  useEffect(() => {
-    get('/api/admin/products/?page_size=500').then(data => {
-      const list = Array.isArray(data) ? data : (data.results || []);
-      setProducts(list);
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      let results = [];
+      let url = '/api/admin/products/?page_size=100';
+      while (url) {
+        const data = await get(url);
+        results = results.concat(Array.isArray(data) ? data : (data.results || []));
+        url = (!Array.isArray(data) && data.next) ? data.next.replace(/^https?:\/\/[^/]+/, '') : null;
+      }
+      setProducts(results);
+    } finally {
       setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    }
+  }, [get]);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const section = SECTIONS.find(s => s.key === activeSection);
 
@@ -129,9 +139,14 @@ export default function SectionsAdminPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Homepage Sections</h1>
-        <p className="text-sm text-gray-500 mt-1">Control which products appear in each section on the storefront homepage</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Homepage Sections</h1>
+          <p className="text-sm text-gray-500 mt-1">Control which products appear in each section on the storefront homepage</p>
+        </div>
+        <button onClick={fetchAll} disabled={loading} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors disabled:opacity-30" title="Refresh">
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
       </div>
 
       {/* Section tabs */}

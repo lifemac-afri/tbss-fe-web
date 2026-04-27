@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
+import SEO from '../components/SEO';
 
 const NotFoundPage = () => {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <SEO title="404 Page Not Found" description="The page you are looking for does not exist. Browse our collection of books and stationery instead." />
       <div className="text-center max-w-md">
         <h1 className="text-8xl font-aclonica text-[#F46B03] mb-2">404</h1>
         <h2 className="text-2xl font-semibold text-gray-900 mb-3">Page Not Found</h2>

@@ -27,8 +27,8 @@ const navItemIcons = {
 
 const navRoutes = {
   Bestsellers: '/bestsellers',
-  Games: '/shop?category=games',
-  Stationeries: '/shop?category=stationery',
+  Games: '/shop?genre=games',
+  Stationeries: '/shop?genre=stationery',
   Blogs: '/blog',
   Community: '/community',
 };

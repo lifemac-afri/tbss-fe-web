@@ -8,6 +8,7 @@ import { AdminProvider } from './context/AdminContext';
 import { RealtimeProvider } from './context/RealtimeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
@@ -33,6 +34,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import GoogleCallbackPage from './pages/auth/GoogleCallbackPage';
 
 import DashboardPage from './pages/dashboard/DashboardPage';
 import OrdersPage from './pages/dashboard/OrdersPage';
@@ -40,13 +42,17 @@ import WishlistDashPage from './pages/dashboard/WishlistDashPage';
 import BookClubsDashPage from './pages/dashboard/BookClubsDashPage';
 import ReadingPlansDashPage from './pages/dashboard/ReadingPlansDashPage';
 import NotificationsPage from './pages/dashboard/NotificationsPage';
+import AddressesPage from './pages/dashboard/AddressesPage';
 import AccountSettingsPage from './pages/dashboard/AccountSettingsPage';
 
 import AdminOverviewPage from './pages/admin/AdminOverviewPage';
 import ProductsAdminPage from './pages/admin/ProductsAdminPage';
-import CategoriesAdminPage from './pages/admin/CategoriesAdminPage';
+import GenresAdminPage from './pages/admin/GenresAdminPage';
 import OrdersAdminPage from './pages/admin/OrdersAdminPage';
 import UsersAdminPage from './pages/admin/UsersAdminPage';
+import AdminStaffPage from './pages/admin/AdminStaffPage';
+import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import BlogAdminPage from './pages/admin/BlogAdminPage';
 import ReadingPlansAdminPage from './pages/admin/ReadingPlansAdminPage';
 import BookClubsAdminPage from './pages/admin/BookClubsAdminPage';
@@ -54,6 +60,7 @@ import SectionsAdminPage from './pages/admin/SectionsAdminPage';
 import ReviewsAdminPage from './pages/admin/ReviewsAdminPage';
 import DealsAdminPage from './pages/admin/DealsAdminPage';
 import NewsletterAdminPage from './pages/admin/NewsletterAdminPage';
+import AcceptInvitePage from './pages/auth/AcceptInvitePage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 import TermsPage from './pages/legal/TermsPage';
 
@@ -67,6 +74,7 @@ function App() {
               <ToastProvider>
                 <RealtimeProvider>
                 <BrowserRouter>
+                  <ScrollToTop />
                   <Routes>
                     {/* Public Routes — Main Layout */}
                     <Route element={<MainLayout />}>
@@ -89,6 +97,9 @@ function App() {
 
                     {/* Checkout — standalone (no nav/footer) */}
                     <Route path="checkout" element={<CheckoutPage />} />
+
+                    {/* Google OAuth callback — no layout wrapper needed */}
+                    <Route path="auth/callback" element={<GoogleCallbackPage />} />
 
                     {/* Auth Routes — Auth Layout */}
                     <Route element={<AuthLayout />}>
@@ -114,6 +125,7 @@ function App() {
                       <Route path="book-clubs" element={<BookClubsDashPage />} />
                       <Route path="reading-plans" element={<ReadingPlansDashPage />} />
                       <Route path="notifications" element={<NotificationsPage />} />
+                      <Route path="addresses" element={<AddressesPage />} />
                       <Route path="account" element={<AccountSettingsPage />} />
                     </Route>
 
@@ -131,9 +143,13 @@ function App() {
                       <Route index element={<AdminOverviewPage />} />
                       <Route path="products" element={<ProductsAdminPage />} />
                       <Route path="reviews" element={<ReviewsAdminPage />} />
-                      <Route path="categories" element={<CategoriesAdminPage />} />
+                      <Route path="genres" element={<GenresAdminPage />} />
                       <Route path="orders" element={<OrdersAdminPage />} />
+                      <Route path="customers" element={<UsersAdminPage />} />
                       <Route path="users" element={<UsersAdminPage />} />
+                      <Route path="staff" element={<AdminStaffPage />} />
+                      <Route path="audit-log" element={<AdminAuditLogPage />} />
+                      <Route path="settings" element={<AdminSettingsPage />} />
                       <Route path="blog" element={<BlogAdminPage />} />
                       <Route path="reading-plans" element={<ReadingPlansAdminPage />} />
                       <Route path="book-clubs" element={<BookClubsAdminPage />} />
@@ -141,6 +157,9 @@ function App() {
                       <Route path="deals" element={<DealsAdminPage />} />
                       <Route path="newsletter" element={<NewsletterAdminPage />} />
                     </Route>
+
+                    {/* Staff invite accept — outside admin layout, no auth required */}
+                    <Route path="accept-invite" element={<AcceptInvitePage />} />
                   </Routes>
                 </BrowserRouter>
                 </RealtimeProvider>

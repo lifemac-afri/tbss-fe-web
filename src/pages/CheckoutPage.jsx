@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight, CheckCircle, MapPin, CreditCard, ShoppingBag, ArrowLeft, Copy } from 'lucide-react';
+import CheckoutSdk from '@hubteljs/checkout';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import logo from '../assets/logo/logo.png';
 import api from '../lib/api';
+import CelebrationModal from '../components/CelebrationModal';
 
-const DELIVERY_FEE = 30;
+const DELIVERY_FEE = 0;
 const STEPS = ['Delivery', 'Review', 'Payment', 'Done'];
 
 const regions = ['Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta', 'Northern', 'Upper East', 'Upper West', 'Bono', 'Ahafo', 'Bono East', 'Oti', 'Savannah', 'North East', 'Western North'];
@@ -69,7 +72,7 @@ const OrderSummaryPanel = ({ cartItems, subtotal }) => (
   </div>
 );
 
-const DeliveryStep = ({ form, setForm, onNext }) => {
+const DeliveryStep = ({ form, setForm, onNext, addresses, selectedAddressId, setSelectedAddressId, isAddingNew, setIsAddingNew }) => {
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -88,13 +91,72 @@ const DeliveryStep = ({ form, setForm, onNext }) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <MapPin size={18} className="text-[#F46B03]" />
-        <h2 className="font-bold text-gray-900">Delivery Information</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <MapPin size={18} className="text-[#F46B03]" />
+          <h2 className="font-bold text-gray-900">Delivery Information</h2>
+        </div>
+        {addresses.length > 0 && (
+          <button 
+            onClick={() => setIsAddingNew(!isAddingNew)}
+            className="text-xs font-semibold text-[#F46B03] hover:underline"
+          >
+            {isAddingNew ? "Select Saved Address" : "Add New Address"}
+          </button>
+        )}
       </div>
 
-      <Field label="Full Name" required>
+      {!isAddingNew && addresses.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Choose a delivery address</p>
+          <div className="grid gap-3">
+            {addresses.map((addr) => (
+              <label 
+                key={addr.id}
+                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedAddressId === addr.id ? 'border-[#F46B03] bg-orange-50/30' : 'border-gray-100 hover:border-gray-200'
+                }`}
+              >
+                <input 
+                  type="radio" 
+                  name="address" 
+                  checked={selectedAddressId === addr.id}
+                  onChange={() => {
+                    setSelectedAddressId(addr.id);
+                    setForm({
+                      name: addr.full_name,
+                      phone: addr.phone_number,
+                      street: addr.street_address,
+                      city: addr.city,
+                      region: addr.state_province,
+                      note: form.note,
+                      saveAddress: false,
+                    });
+                  }}
+                  className="mt-1 accent-[#F46B03]"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-sm font-bold text-gray-800">{addr.full_name}</p>
+                    {addr.is_default && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase">Default</span>}
+                  </div>
+                  <p className="text-sm text-gray-600 truncate">{addr.street_address}</p>
+                  <p className="text-xs text-gray-400">{addr.city}, {addr.state_province} · {addr.phone_number}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+          <button 
+            onClick={handleNext}
+            className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 mt-4"
+          >
+            Continue to Review <ChevronRight size={18} />
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Field label="Full Name" required>
         <input className={`${inputCls} ${errors.name ? 'border-red-300' : ''}`} placeholder="Kwame Mensah"
           value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
         {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name}</p>}
@@ -130,15 +192,27 @@ const DeliveryStep = ({ form, setForm, onNext }) => {
           value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
       </Field>
 
-      <button onClick={handleNext}
-        className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 mt-2">
-        Continue to Review <ChevronRight size={18} />
-      </button>
+      <label className="flex items-center gap-2 cursor-pointer mt-2">
+        <input 
+          type="checkbox" 
+          checked={form.saveAddress} 
+          onChange={(e) => setForm(f => ({ ...f, saveAddress: e.target.checked }))}
+          className="w-4 h-4 accent-[#F46B03] rounded border-gray-300"
+        />
+        <span className="text-sm text-gray-600">Save this address for future orders</span>
+      </label>
+
+          <button onClick={handleNext}
+            className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 mt-2">
+            Continue to Review <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-const ReviewStep = ({ form, cartItems, subtotal, onBack, onNext }) => (
+const ReviewStep = ({ form, cartItems, subtotal, onBack, onPay, paying }) => (
   <div className="space-y-5">
     <div className="flex items-center gap-2 mb-2">
       <ShoppingBag size={18} className="text-[#F46B03]" />
@@ -180,82 +254,16 @@ const ReviewStep = ({ form, cartItems, subtotal, onBack, onNext }) => (
     </div>
 
     <div className="flex gap-3">
-      <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-3 border border-gray-200 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors">
+      <button onClick={onBack} disabled={paying} className="flex items-center gap-1.5 px-4 py-3 border border-gray-200 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50">
         <ArrowLeft size={16} /> Back
       </button>
-      <button onClick={onNext} className="flex-1 py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2">
-        Continue to Payment <ChevronRight size={18} />
+      <button onClick={onPay} disabled={paying} className="flex-1 py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+        {paying ? 'Processing...' : `Pay Now ₵${subtotal + DELIVERY_FEE}`} <ChevronRight size={18} />
       </button>
     </div>
   </div>
 );
 
-const PAYMENT_METHODS = [
-  { id: 'mtn', label: 'MTN Mobile Money', hint: 'Enter your MTN MoMo number', color: 'bg-yellow-400' },
-  { id: 'vodafone', label: 'Vodafone Cash', hint: 'Enter your Vodafone Cash number', color: 'bg-red-500' },
-  { id: 'airteltigo', label: 'AirtelTigo Money', hint: 'Enter your AirtelTigo number', color: 'bg-blue-500' },
-  { id: 'card', label: 'Visa / Mastercard', hint: 'Card details', color: 'bg-gray-800' },
-];
-
-const PaymentStep = ({ subtotal, onBack, onPay, paying, method, setMethod, momo, setMomo, card, setCard }) => {
-  const total = subtotal + DELIVERY_FEE;
-
-  const isMomo = method !== 'card';
-
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-2 mb-2">
-        <CreditCard size={18} className="text-[#F46B03]" />
-        <h2 className="font-bold text-gray-900">Payment</h2>
-      </div>
-
-      <div className="space-y-2">
-        {PAYMENT_METHODS.map((m) => (
-          <label key={m.id} className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-            method === m.id ? 'border-[#F46B03] bg-orange-50/40' : 'border-gray-200 hover:border-gray-300'
-          }`}>
-            <input type="radio" name="pay" value={m.id} checked={method === m.id} onChange={() => setMethod(m.id)} className="accent-[#F46B03]" />
-            <span className={`w-3 h-3 rounded-full ${m.color} flex-shrink-0`} />
-            <span className="text-sm font-medium text-gray-800">{m.label}</span>
-          </label>
-        ))}
-      </div>
-
-      {isMomo ? (
-        <Field label={PAYMENT_METHODS.find((m) => m.id === method)?.hint}>
-          <input className={inputCls} placeholder="0244 000 000" value={momo} onChange={(e) => setMomo(e.target.value)} />
-        </Field>
-      ) : (
-        <div className="space-y-3">
-          <Field label="Card Number">
-            <input className={inputCls} placeholder="4111 1111 1111 1111" maxLength={19}
-              value={card.number} onChange={(e) => setCard((c) => ({ ...c, number: e.target.value }))} />
-          </Field>
-          <Field label="Name on Card">
-            <input className={inputCls} placeholder="Kwame Mensah" value={card.name} onChange={(e) => setCard((c) => ({ ...c, name: e.target.value }))} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Expiry"><input className={inputCls} placeholder="MM/YY" maxLength={5} value={card.expiry} onChange={(e) => setCard((c) => ({ ...c, expiry: e.target.value }))} /></Field>
-            <Field label="CVV"><input className={inputCls} placeholder="123" maxLength={4} value={card.cvv} onChange={(e) => setCard((c) => ({ ...c, cvv: e.target.value }))} /></Field>
-          </div>
-        </div>
-      )}
-
-      <div className="flex gap-3">
-        <button onClick={onBack} className="flex items-center gap-1.5 px-4 py-3 border border-gray-200 text-sm font-medium text-gray-600 rounded-xl hover:bg-gray-50 transition-colors">
-          <ArrowLeft size={16} /> Back
-        </button>
-        <button
-          onClick={() => onPay(method)}
-          disabled={paying || (!isMomo && (!card.number || !card.expiry || !card.cvv)) || (isMomo && momo.length < 10)}
-          className="flex-1 py-3 bg-[#F46B03] text-white font-bold rounded-xl hover:bg-[#C15300] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          {paying ? 'Processing...' : `Pay ₵${total}`}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod }) => {
   const navigate = useNavigate();
@@ -323,6 +331,7 @@ const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod })
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
+  const { currentUser: user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -331,77 +340,74 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [form, setForm] = useState({
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
+    saveAddress: true,
   });
-  const [method, setMethod] = useState('mtn');
-  const [momo, setMomo] = useState('');
-  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
-  const [waitingForApproval, setWaitingForApproval] = useState(false);
-  const [pollingCount, setPollingCount] = useState(0);
+  const [celebrationOpen, setCelebrationOpen] = useState(false);
+  const [celebrationStats, setCelebrationStats] = useState(null);
+  const [celebrationProductImage, setCelebrationProductImage] = useState(null);
+
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [waitForPayment, setWaitForPayment] = useState(false);
+
+  const [orderSummary, setOrderSummary] = useState(null);
 
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
-  const startPolling = (id) => {
-    setWaitingForApproval(true);
-    setPollingCount(0);
-    
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get(`/api/orders/${id}/status/`);
-        const data = await res.json();
-        
-        if (data.status === 'paid') {
-          clearInterval(interval);
-          setOrderId(id);
-          clearCart();
-          setWaitingForApproval(false);
-          setStep(3);
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-      
-      setPollingCount(prev => {
-        if (prev >= 20) { // 60 seconds (20 * 3s)
-          clearInterval(interval);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 3000);
-    
-    return interval;
-  };
-
-  const manualCheck = async () => {
-    if (!orderId) return;
-    try {
-      const res = await api.post(`/api/orders/${orderId}/check-payment/`);
-      const data = await res.json();
-      if (data.status === 'paid') {
-        clearCart();
-        setWaitingForApproval(false);
-        setStep(3);
-      }
-    } catch (err) {
-      console.error("Manual check error:", err);
+  useEffect(() => {
+    if (user) {
+      api.get('/api/users/me/addresses/')
+        .then(res => res.json())
+        .then(data => {
+          const list = data.results || data;
+          setAddresses(list);
+          const def = list.find(a => a.is_default);
+          if (def) {
+            setSelectedAddressId(def.id);
+            setForm({
+              name: def.full_name,
+              phone: def.phone_number,
+              street: def.street_address,
+              city: def.city,
+              region: def.state_province,
+              note: '',
+              saveAddress: false,
+            });
+          } else if (list.length > 0) {
+            setSelectedAddressId(list[0].id);
+            setForm({
+              name: list[0].full_name,
+              phone: list[0].phone_number,
+              street: list[0].street_address,
+              city: list[0].city,
+              region: list[0].state_province,
+              note: '',
+              saveAddress: false,
+            });
+            setIsAddingNew(false);
+          } else {
+            setIsAddingNew(true);
+          }
+        })
+        .catch(err => console.error("Error fetching addresses:", err));
+    } else {
+      setIsAddingNew(true);
     }
-  };
+  }, [user]);
 
-  const handlePay = async (method) => {
-    const labels = { mtn: 'MTN Mobile Money', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo Money', card: 'Visa/Mastercard' };
+
+  const handlePay = async () => {
     setPaying(true);
-    setPaymentMethod(labels[method] || method);
 
     const payload = {
       customer_details: {
         name: form.name,
-        phone: form.phone, // Delivery phone
+        phone: form.phone,
         street: form.street,
         city: form.city,
         region: form.region,
         note: form.note,
-        payment_method: method,
-        payment_phone: method === 'card' ? '' : momo, // Payment phone from PaymentStep
       },
       shipping_address: {
         name: form.name,
@@ -413,32 +419,93 @@ const CheckoutPage = () => {
     };
 
     try {
-      // Corrected endpoint to /api/orders/
+      // 1. Save address if requested
+      if (isAddingNew && form.saveAddress && user) {
+        await api.post('/api/users/me/addresses/', {
+          full_name: form.name,
+          phone_number: form.phone,
+          street_address: form.street,
+          city: form.city,
+          state_province: form.region,
+          postal_code: '0000',
+          country: 'Ghana',
+          is_default: addresses.length === 0,
+        });
+      }
+
+      // 2. Create Order & Get Hubtel Config
       const res = await api.post('/api/orders/', payload);
       const data = await res.json();
-      
+
       if (!res.ok) {
         toast.error(data.detail || "Failed to create order. Please try again.");
+        setPaying(false);
         return;
       }
 
-      if (data.id) {
-        setOrderId(data.id);
-        if (method !== 'card') {
-          startPolling(data.id);
-        } else if (data.checkout_url) {
-          window.location.href = data.checkout_url;
-        }
+      if (data.order && data.order.id) {
+        setOrderId(data.order.id);
+
+        const checkout = new CheckoutSdk();
+
+        checkout.openModal({
+          purchaseInfo: data.purchaseInfo,
+          config: data.config,
+          callBacks: {
+            onInit: () => console.log('Hubtel Checkout initialized'),
+            onPaymentSuccess: async (paymentData) => {
+              console.log('Payment Success', paymentData);
+              
+              // Capture order summary for confirmation step before clearing cart
+              setOrderSummary({
+                items: [...cartItems],
+                subtotal,
+                total: subtotal + DELIVERY_FEE,
+                form: { ...form }
+              });
+
+              // Trigger one manual status check to backend to force update to 'paid'
+              try {
+                const checkRes = await api.post(`/api/orders/${data.order.id}/check-payment/`);
+                const checkData = await checkRes.json();
+                
+                // Fetch full order details to get regional stats
+                const fullOrderRes = await api.get(`/api/orders/${data.order.id}/`);
+                const fullOrder = await fullOrderRes.json();
+
+                if (fullOrder.regional_stats) {
+                  setCelebrationStats(fullOrder.regional_stats);
+                  // Get product image from the items
+                  const firstItem = fullOrder.items[0];
+                  setCelebrationProductImage(firstItem?.product_image);
+                  setCelebrationOpen(true);
+                }
+              } catch (err) {
+                console.error("Post-success status check or fetch failed:", err);
+              }
+
+              clearCart();
+              setStep(2);
+              setPaying(false);
+            },
+            onPaymentFailure: (paymentData) => {
+              console.log('Payment Failure', paymentData);
+              toast.error("Payment failed or cancelled.");
+            },
+            onClose: () => {
+              setPaying(false);
+            }
+          }
+        });
       }
     } catch (err) {
       console.error("Checkout error:", err);
       toast.error("A network error occurred. Please check your connection.");
-    } finally {
       setPaying(false);
     }
   };
 
-  if (cartItems.length === 0 && step < 3) {
+  if (cartItems.length === 0 && step < 2) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
@@ -475,27 +542,32 @@ const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main panel */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 lg:p-6 shadow-sm">
-            {step === 0 && <DeliveryStep form={form} setForm={setForm} onNext={() => setStep(1)} />}
-            {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
-            {step === 2 && (
-              <PaymentStep 
-                subtotal={subtotal} 
-                onBack={() => setStep(1)} 
-                onPay={handlePay} 
-                paying={paying}
-                method={method}
-                setMethod={setMethod}
-                momo={momo}
-                setMomo={setMomo}
-                card={card}
-                setCard={setCard}
+            {step === 0 && (
+              <DeliveryStep 
+                form={form} 
+                setForm={setForm} 
+                onNext={() => setStep(1)} 
+                addresses={addresses}
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={setSelectedAddressId}
+                isAddingNew={isAddingNew}
+                setIsAddingNew={setIsAddingNew}
               />
             )}
-            {step === 3 && <ConfirmationStep orderId={orderId} form={form} cartItems={cartItems} subtotal={subtotal} paymentMethod={paymentMethod} />}
+            {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onPay={handlePay} paying={paying} />}
+            {step === 2 && (
+              <ConfirmationStep 
+                orderId={orderId} 
+                form={orderSummary?.form || form} 
+                cartItems={orderSummary?.items || []} 
+                subtotal={orderSummary?.subtotal || 0} 
+                paymentMethod="Hubtel Checkout" 
+              />
+            )}
           </div>
 
           {/* Summary sidebar — hidden on confirmation */}
-          {step < 3 && (
+          {step < 2 && (
             <div className="lg:col-span-1">
               <OrderSummaryPanel cartItems={cartItems} subtotal={subtotal} />
             </div>
@@ -503,42 +575,12 @@ const CheckoutPage = () => {
         </div>
       </div>
 
-      {/* Waiting for Approval Overlay */}
-      {waitingForApproval && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in fade-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div className="w-10 h-10 border-4 border-[#F46B03] border-t-transparent rounded-full animate-spin" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Payment</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              A USSD prompt has been sent to your phone. Please enter your PIN to authorize the transaction.
-            </p>
-            
-            <div className="space-y-3">
-              <button 
-                onClick={manualCheck}
-                className="w-full py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors"
-              >
-                I've made the payment
-              </button>
-              
-              {pollingCount >= 20 ? (
-                <button 
-                  onClick={() => setWaitingForApproval(false)}
-                  className="w-full py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Close & Check Orders Later
-                </button>
-              ) : (
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium">
-                  Waiting... {60 - (pollingCount * 3)}s
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <CelebrationModal 
+        isOpen={celebrationOpen} 
+        onClose={() => setCelebrationOpen(false)}
+        stats={celebrationStats}
+        productImage={celebrationProductImage}
+      />
     </div>
   );
 };

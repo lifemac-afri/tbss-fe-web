@@ -22,8 +22,6 @@ export function normalizeProduct(p) {
     isbn: p.isbn || '',
     genre: p.genre_name || p.genre?.name || '',
     genreSlug: p.genre?.slug || p.genre_slug || '',
-    category: p.category_name || p.category?.name || '',
-    categorySlug: p.category?.slug || p.category_slug || '',
     rating: parseFloat(p.average_rating || p.rating || 0),
     reviews: parseInt(p.review_count || (!Array.isArray(p.reviews) ? p.reviews : 0) || 0, 10),
     reviewList: Array.isArray(p.reviews) ? p.reviews : [],
