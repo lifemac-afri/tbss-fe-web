@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ChevronRight, CheckCircle, MapPin, CreditCard, ShoppingBag, ArrowLeft, Copy } from 'lucide-react';
 import CheckoutSdk from '@hubteljs/checkout';
 import { useCart } from '../context/CartContext';
@@ -334,6 +334,9 @@ const CheckoutPage = () => {
   const { currentUser: user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const buyNowItem = location.state?.buyNowItem;
+
   const [step, setStep] = useState(0);
   const [paying, setPaying] = useState(false);
   const [orderId, setOrderId] = useState('');
@@ -342,18 +345,16 @@ const CheckoutPage = () => {
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
     saveAddress: true,
   });
-  const [celebrationOpen, setCelebrationOpen] = useState(false);
-  const [celebrationStats, setCelebrationStats] = useState(null);
-  const [celebrationProductImage, setCelebrationProductImage] = useState(null);
+  const [method, setMethod] = useState('mtn');
+  const [momo, setMomo] = useState('');
+  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
+  const [waitingForApproval, setWaitingForApproval] = useState(false);
+  const [pollingCount, setPollingCount] = useState(0);
+  
+  const checkoutItems = buyNowItem ? [buyNowItem] : cartItems;
+  const isBuyNow = !!buyNowItem;
 
-  const [addresses, setAddresses] = useState([]);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [waitForPayment, setWaitForPayment] = useState(false);
-
-  const [orderSummary, setOrderSummary] = useState(null);
-
-  const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  const subtotal = checkoutItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
   useEffect(() => {
     if (user) {
@@ -416,6 +417,13 @@ const CheckoutPage = () => {
         city: form.city,
         region: form.region,
       },
+      // Include items in payload for Buy Now to override server-side cart
+      ...(isBuyNow ? {
+        items: checkoutItems.map(item => ({
+          product: item.productId || item.id,
+          quantity: item.quantity
+        }))
+      } : {})
     };
 
     try {
@@ -505,7 +513,7 @@ const CheckoutPage = () => {
     }
   };
 
-  if (cartItems.length === 0 && step < 2) {
+  if (checkoutItems.length === 0 && step < 3) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
@@ -542,19 +550,8 @@ const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main panel */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 lg:p-6 shadow-sm">
-            {step === 0 && (
-              <DeliveryStep 
-                form={form} 
-                setForm={setForm} 
-                onNext={() => setStep(1)} 
-                addresses={addresses}
-                selectedAddressId={selectedAddressId}
-                setSelectedAddressId={setSelectedAddressId}
-                isAddingNew={isAddingNew}
-                setIsAddingNew={setIsAddingNew}
-              />
-            )}
-            {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} onBack={() => setStep(0)} onPay={handlePay} paying={paying} />}
+            {step === 0 && <DeliveryStep form={form} setForm={setForm} onNext={() => setStep(1)} />}
+            {step === 1 && <ReviewStep form={form} cartItems={checkoutItems} subtotal={subtotal} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
             {step === 2 && (
               <ConfirmationStep 
                 orderId={orderId} 
@@ -564,12 +561,13 @@ const CheckoutPage = () => {
                 paymentMethod="Hubtel Checkout" 
               />
             )}
+            {step === 3 && <ConfirmationStep orderId={orderId} form={form} cartItems={checkoutItems} subtotal={subtotal} paymentMethod={paymentMethod} />}
           </div>
 
           {/* Summary sidebar — hidden on confirmation */}
           {step < 2 && (
             <div className="lg:col-span-1">
-              <OrderSummaryPanel cartItems={cartItems} subtotal={subtotal} />
+              <OrderSummaryPanel cartItems={checkoutItems} subtotal={subtotal} />
             </div>
           )}
         </div>
