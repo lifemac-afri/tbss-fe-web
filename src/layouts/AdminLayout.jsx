@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { TourProvider, useTour } from '@reactour/tour';
 import { useAuth } from '../context/AuthContext';
@@ -57,11 +57,6 @@ const NAV = [
   {
     to: '/admin/products', label: 'Products', icon: (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
-    )
-  },
-  {
-    to: '/admin/shelf-locator', label: 'Shelf Locator', icon: (
-      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /><path d="M4 6V18" /><path d="M20 6V18" /></svg>
     )
   },
   {
