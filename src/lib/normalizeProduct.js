@@ -1,4 +1,6 @@
 export function normalizeProduct(p) {
+  const price = parseFloat(p.price || p.product_price || 0);
+  const oldPrice = p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : null);
   const stockQty = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
   return {
     id: p.id,
@@ -6,13 +8,11 @@ export function normalizeProduct(p) {
     author: p.author || '',
     slug: p.slug || '',
     description: p.description || '',
-    price: parseFloat(p.price || 0),
-    oldPrice: p.old_price ? parseFloat(p.old_price) : null,
+    price: price,
+    oldPrice: oldPrice,
     discount: (() => {
-      const price = parseFloat(p.price || 0);
-      const old = p.old_price ? parseFloat(p.old_price) : null;
-      if (old && old > price) {
-        return `${Math.round((old - price) / old * 100)}% OFF`;
+      if (oldPrice && oldPrice > price) {
+        return `${Math.round((oldPrice - price) / oldPrice * 100)}% OFF`;
       }
       return p.discount || null;
     })(),

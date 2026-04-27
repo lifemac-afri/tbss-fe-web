@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShoppingCart, Minus, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, ShoppingCart, Minus, Plus, Zap } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import paperbackIcon from '../assets/icons/paperback.svg';
 import hardcoverIcon from '../assets/icons/hardcover.svg';
 
 const AddToCartModal = () => {
+  const navigate = useNavigate();
   const { cartModalBook, closeAddToCartModal, addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -34,6 +36,12 @@ const AddToCartModal = () => {
     setTimeout(() => {
       closeAddToCartModal();
     }, 700);
+  };
+
+  const handleBuyNow = () => {
+    addToCart(book, qty);
+    closeAddToCartModal();
+    navigate('/checkout');
   };
 
   return (
@@ -127,10 +135,11 @@ const AddToCartModal = () => {
         {/* Action buttons */}
         <div className="px-5 pb-6 flex gap-3">
           <button
-            onClick={closeAddToCartModal}
-            className="flex-1 h-12 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-semibold hover:border-gray-300 transition-colors"
+            onClick={handleBuyNow}
+            className="flex-1 h-12 rounded-xl border-2 border-gray-100 flex items-center justify-center gap-2 text-[#F46B03] text-sm font-bold hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
           >
-            Cancel
+            <Zap size={16} fill="currentColor" />
+            Buy Now
           </button>
           <button
             onClick={handleAdd}

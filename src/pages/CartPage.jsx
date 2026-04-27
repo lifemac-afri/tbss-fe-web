@@ -5,15 +5,13 @@ import { useCart } from '../context/CartContext';
 import paperbackIcon from '../assets/icons/paperback.svg';
 import hardcoverIcon from '../assets/icons/hardcover.svg';
 
-const DELIVERY_THRESHOLD = 300;
 
 const CartPage = () => {
   const { cartItems, cartCount, cartTotal, updateQuantity, removeFromCart } = useCart();
   const navigate = useNavigate();
 
-  const delivery = cartTotal >= DELIVERY_THRESHOLD ? 0 : 30;
-  const grandTotal = cartTotal + delivery;
-  const toFreeDelivery = Math.max(0, DELIVERY_THRESHOLD - cartTotal);
+  const delivery = 30;
+  const grandTotal = cartTotal + (cartTotal > 0 ? delivery : 0);
 
   return (
     <div className="min-h-screen bg-white pb-32">
@@ -38,28 +36,6 @@ const CartPage = () => {
         </div>
       </div>
 
-      {/* Free delivery bar */}
-      {cartTotal > 0 && (
-        <div className="bg-orange-50 border-b border-orange-100 px-4 py-3">
-          <div className="max-w-lg mx-auto">
-            {delivery === 0 ? (
-              <p className="text-xs font-semibold text-green-700">🎉 You qualify for free delivery!</p>
-            ) : (
-              <>
-                <p className="text-xs text-gray-600 mb-1.5">
-                  Add <span className="font-bold text-[#F46B03]">₵{toFreeDelivery}</span> more for free delivery
-                </p>
-                <div className="w-full bg-orange-200 rounded-full h-1.5">
-                  <div
-                    className="bg-[#F46B03] h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, (cartTotal / DELIVERY_THRESHOLD) * 100)}%` }}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="max-w-lg mx-auto px-4 pt-4">
         {cartItems.length === 0 ? (
@@ -156,9 +132,7 @@ const CartPage = () => {
                 </div>
                 <div className="flex justify-between text-gray-500">
                   <span>Delivery</span>
-                  <span className={`font-semibold ${delivery === 0 ? 'text-green-600' : 'text-gray-700'}`}>
-                    {delivery === 0 ? 'Free' : `₵${delivery}`}
-                  </span>
+                  <span className="font-semibold text-gray-700">₵{delivery}</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-gray-100 text-base">
                   <span className="font-bold text-gray-900">Total</span>

@@ -2,19 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import api from '../lib/api';
+import stat1 from '../assets/img/stat1.jpeg';
+import stat2 from '../assets/img/stat2.jpeg';
+import stat3 from '../assets/img/stat3.jpeg';
+import game1 from '../assets/img/game1.jpeg';
+import game2 from '../assets/img/game2.jpeg';
+import game3 from '../assets/img/game3.jpeg';
+
 
 const GAMES_PLACEHOLDER = [
-  'https://images.unsplash.com/photo-1518893883800-45cd0954574b?q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1606503153255-59d5a417f8c1?q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1553481187-be93c21490a9?q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1632501641765-e568d28b0015?q=80&w=600&auto=format&fit=crop',
+  game1,
+  game2,
+  game3,
+  game1, // Fallback if 4 are needed
 ];
 
 const STATIONERY_PLACEHOLDER = [
-  'https://images.unsplash.com/photo-1506784926709-22f1ec395907?q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1455720371069-edb9da5e09df?q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1473188588951-666fce8e7c68?q=80&w=600&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=600&auto=format&fit=crop',
+  stat1,
+  stat2,
+  stat3,
+  stat1, // Fallback if 4 are needed
 ];
 
 const BentoGrid = ({ images, label, href, ctaLabel }) => {

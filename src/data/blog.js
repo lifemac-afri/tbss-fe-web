@@ -19,7 +19,7 @@ export const articles = [
       <p>A noir thriller set in Victoria Island's nightlife, this page-turner follows a retired detective pulled back into Lagos's criminal underworld. Sharp prose, razor-sharp dialogue.</p>
       <h2>3. Borrowed Skies — Amara Osei</h2>
       <p>Osei's third novel is her most ambitious yet — a climate fiction epic tracing how a Ghanaian farming village adapts to desertification over fifty years. Devastating and hopeful in equal measure.</p>
-      <p>These are just three of the ten remarkable stories that defined African literary fiction in 2025. Each one is available now in our shop, with free next-day delivery on orders over ₵100.</p>
+      <p>These are just three of the ten remarkable stories that defined African literary fiction in 2025. Each one is available now in our shop.</p>
     `,
   },
   {
@@ -123,7 +123,7 @@ export const articles = [
       <p>Understand your own biases before they cost you. This Nobel laureate's masterwork is essential reading for any decision-maker.</p>
       <h2>3. Who Moved My Cheese? — Spencer Johnson</h2>
       <p>A quick read, but the lesson — embrace change before change forces itself on you — is timeless and immediately applicable to any Ghanaian market shift.</p>
-      <p>All seven books are available now with free delivery in Accra. Corporate bulk order discounts available for reading programmes and team training.</p>
+      <p>All seven books are available now in our shop. Corporate bulk order discounts available for reading programmes and team training.</p>
     `,
   },
 ];
