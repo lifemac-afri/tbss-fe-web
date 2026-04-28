@@ -14,10 +14,10 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 
-export const navItems = ['Genre', 'Bestsellers', 'Games', 'Stationeries', 'Blogs', 'Community'];
+export const navItems = ['Books', 'Bestsellers', 'Games', 'Stationeries', 'Blogs', 'Community'];
 
 const navItemIcons = {
-  Genre: LayoutGrid,
+  Books: LayoutGrid,
   Bestsellers: Star,
   Games: Gamepad2,
   Stationeries: PenTool,
@@ -83,7 +83,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
   }, [hoveredGenre]);
 
   const handleNavClick = (item) => {
-    if (item === 'Genre') { setGenreOpen((prev) => !prev); onItemClick?.(item); return; }
+    if (item === 'Books') { setGenreOpen((prev) => !prev); onItemClick?.(item); return; }
     setGenreOpen(false);
     onItemClick?.(item);
     if (navRoutes[item]) navigate(navRoutes[item]);
@@ -120,15 +120,15 @@ const MainNav = ({ activeItem, onItemClick }) => {
           {/* Nav items — centred, desktop only */}
           <div className="hidden lg:flex items-center gap-6 xl:gap-8">
             {navItems.map((item) => {
-              if (item === 'Genre') {
+              if (item === 'Books') {
                 return (
-                  <div key="Genre" className="relative" ref={genreRef}>
+                  <div key="Books" className="relative" ref={genreRef}>
                     <button
-                      onClick={() => handleNavClick('Genre')}
+                      onClick={() => handleNavClick('Books')}
                       className={`flex items-center gap-1 text-sm font-bold transition-colors duration-200 bg-transparent border-none cursor-pointer whitespace-nowrap
-                        ${activeItem === 'Genre' ? 'text-[#F46B03]' : 'text-gray-700 hover:text-[#F46B03]'}`}
+                        ${activeItem === 'Books' ? 'text-[#F46B03]' : 'text-gray-700 hover:text-[#F46B03]'}`}
                     >
-                      Genre
+                      Books
                       <ChevronDown size={15} className={`transition-transform duration-200 ${genreOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {genreOpen && (
@@ -138,7 +138,7 @@ const MainNav = ({ activeItem, onItemClick }) => {
                       >
                         <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-gray-100 rotate-45 rounded-sm" />
                         <div className="w-60 flex-shrink-0 p-4">
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Browse by Genre</p>
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Browse Books</p>
                           <button
                             onClick={() => handleGenreSelect(null)}
                             onMouseEnter={() => setHoveredGenre(null)}
@@ -325,10 +325,10 @@ const MainNav = ({ activeItem, onItemClick }) => {
               {navItems.map((item) => {
                 const Icon = navItemIcons[item];
                 const isActive = activeItem === item;
-                if (item === 'Genre') {
+                if (item === 'Books') {
                   const isGenreActive = mobileGenreOpen || isActive;
                   return (
-                    <div key="Genre" className="mb-1">
+                    <div key="Books" className="mb-1">
                       <button
                         onClick={() => setMobileGenreOpen((p) => !p)}
                         className={`w-full flex items-center justify-between py-3.5 px-4 rounded-2xl text-base font-bold transition-all
