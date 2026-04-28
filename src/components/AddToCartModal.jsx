@@ -39,9 +39,16 @@ const AddToCartModal = () => {
   };
 
   const handleBuyNow = () => {
-    addToCart(book, qty);
     closeAddToCartModal();
-    navigate('/checkout');
+    navigate('/checkout', { 
+      state: { 
+        buyNowItem: { 
+          ...book, 
+          quantity: qty,
+          productId: book.id 
+        } 
+      } 
+    });
   };
 
   return (
