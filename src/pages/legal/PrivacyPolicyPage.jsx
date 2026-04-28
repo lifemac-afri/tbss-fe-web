@@ -47,7 +47,7 @@ export default function PrivacyPolicyPage() {
               The Book & Stationery Store (<strong>"TBSS"</strong>, <strong>"we"</strong>, <strong>"us"</strong>)
               is an online bookstore based in Accra, Ghana. We sell books, stationery, and games through our
               website. You can contact our data team at{' '}
-              <a href="mailto:privacy@tbss.com" className="text-[#F46B03] hover:underline">privacy@tbss.com</a>.
+              <a href="mailto:tbssgh@gmail.com" className="text-[#F46B03] hover:underline">tbssgh@gmail.com</a>.
             </p>
             <p>
               This policy applies to all personal data processed by TBSS when you visit our website, create
@@ -169,7 +169,7 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>
               To exercise any of these rights, email us at{' '}
-              <a href="mailto:privacy@tbss.com" className="text-[#F46B03] hover:underline">privacy@tbss.com</a>.
+              <a href="mailto:tbssgh@gmail.com" className="text-[#F46B03] hover:underline">tbssgh@gmail.com</a>.
               We will respond within 30 days. You can also delete your account directly from your{' '}
               <Link to="/dashboard/account" className="text-[#F46B03] hover:underline">Account Settings</Link>.
             </p>
@@ -212,8 +212,8 @@ export default function PrivacyPolicyPage() {
             <p>For privacy-related questions or requests:</p>
             <div className="bg-gray-50 rounded-xl p-4 mt-2">
               <p><strong>TBSS Data Protection</strong></p>
-              <p>Email: <a href="mailto:privacy@tbss.com" className="text-[#F46B03] hover:underline">privacy@tbss.com</a></p>
-              <p>Address: Accra, Ghana</p>
+              <p>Email: <a href="mailto:tbssgh@gmail.com" className="text-[#F46B03] hover:underline">tbssgh@gmail.com</a></p>
+              <p>Address: Ho - Volta Region, Ghana</p>
             </div>
           </Section>
 

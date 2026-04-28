@@ -116,7 +116,7 @@ export default function TermsPage() {
               <li>Customised or special-order items.</li>
             </ul>
             <p><strong>Process:</strong> To initiate a return, contact us at{' '}
-            <a href="mailto:returns@tbss.com" className="text-[#F46B03] hover:underline">returns@tbss.com</a>{' '}
+            <a href="mailto:tbssgh@gmail.com" className="text-[#F46B03] hover:underline">tbssgh@gmail.com</a>{' '}
             with your order number. Approved refunds are processed within 7–10 business days to your original
             payment method.</p>
             <p><strong>Damaged/wrong items:</strong> If you receive a damaged or incorrect item, contact us within
@@ -202,7 +202,7 @@ export default function TermsPage() {
           <Section title="14. Contact">
             <div className="bg-gray-50 rounded-xl p-4">
               <p><strong>TBSS Customer Service</strong></p>
-              <p>Email: <a href="mailto:hello@tbss.com" className="text-[#F46B03] hover:underline">hello@tbss.com</a></p>
+              <p>Email: <a href="mailto:tbssgh@gmail.com" className="text-[#F46B03] hover:underline">tbssgh@gmail.com</a></p>
               <p>Address: Accra, Ghana</p>
             </div>
           </Section>
