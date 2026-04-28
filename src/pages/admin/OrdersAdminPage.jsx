@@ -186,7 +186,7 @@ export default function OrdersAdminPage() {
       </div>
 
       {/* Status tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div data-tour="orders-status-filters" className="flex gap-2 mb-4 flex-wrap">
         <button
           onClick={() => handleFilterChange('All')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
@@ -209,7 +209,7 @@ export default function OrdersAdminPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+      <div data-tour="orders-search" className="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
         <input
           placeholder="Search by order ID, customer name or email…"
           value={search}
@@ -259,7 +259,7 @@ export default function OrdersAdminPage() {
       )}
 
       {/* Table Header with Select All */}
-      <div className="bg-white rounded-t-2xl border-x border-t border-gray-100 px-5 py-3 flex items-center gap-4">
+      <div data-tour="orders-bulk-header" className="bg-white rounded-t-2xl border-x border-t border-gray-100 px-5 py-3 flex items-center gap-4">
         <input 
           type="checkbox"
           checked={orders.length > 0 && selectedIds.length === orders.length}
@@ -270,7 +270,7 @@ export default function OrdersAdminPage() {
       </div>
 
       {/* Orders list */}
-      <div className="space-y-3">
+      <div data-tour="orders-list" className="space-y-3">
         {loading && (
           <div className="flex items-center justify-center h-48 bg-white rounded-2xl border border-gray-100">
             <div className="w-8 h-8 border-2 border-[#F46B03] border-t-transparent rounded-full animate-spin" />

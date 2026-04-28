@@ -213,7 +213,7 @@ export default function AdminOverviewPage() {
       )}
 
       {/* ── KPI Cards — Row 1 ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div data-tour="overview-stats" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard loading={loading} label="Revenue This Month" value={ghc(sales_this_month)}
           sub={trendLabel} subUp={sales_trend_pct != null ? sales_trend_pct > 0 : undefined}
           icon={TrendingUp} iconColor="#F46B03" iconBg="#FEF3EA" />
@@ -283,7 +283,7 @@ export default function AdminOverviewPage() {
       </Panel>
 
       {/* ── Row: Monthly bar + Order status pie ── */}
-      <div className="grid lg:grid-cols-5 gap-6">
+      <div data-tour="overview-charts" className="grid lg:grid-cols-5 gap-6">
 
         {/* Monthly Revenue Bar */}
         <Panel title="Monthly Revenue (6 months)" className="lg:col-span-3">

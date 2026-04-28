@@ -9,7 +9,6 @@ import logo from '../assets/logo/logo.png';
 import api from '../lib/api';
 import CelebrationModal from '../components/CelebrationModal';
 
-const DELIVERY_FEE = 0;
 const STEPS = ['Delivery', 'Review', 'Payment', 'Done'];
 
 const regions = ['Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta', 'Northern', 'Upper East', 'Upper West', 'Bono', 'Ahafo', 'Bono East', 'Oti', 'Savannah', 'North East', 'Western North'];
@@ -49,7 +48,7 @@ const StepIndicator = ({ step }) => (
   </div>
 );
 
-const OrderSummaryPanel = ({ cartItems, subtotal }) => (
+const OrderSummaryPanel = ({ cartItems, subtotal, deliveryFee, isCalculating }) => (
   <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Order Summary</p>
     <div className="space-y-2 max-h-52 overflow-y-auto">
@@ -66,8 +65,11 @@ const OrderSummaryPanel = ({ cartItems, subtotal }) => (
     </div>
     <div className="border-t border-gray-200 pt-2 space-y-1">
       <div className="flex justify-between text-xs text-gray-500"><span>Subtotal</span><span>₵{subtotal}</span></div>
-      <div className="flex justify-between text-xs text-gray-500"><span>Delivery</span><span>₵{DELIVERY_FEE}</span></div>
-      <div className="flex justify-between text-sm font-bold text-gray-800 pt-1"><span>Total</span><span>₵{subtotal + DELIVERY_FEE}</span></div>
+      <div className="flex justify-between text-xs text-gray-500">
+        <span>Delivery {isCalculating && <span className="animate-pulse text-[10px] text-orange-400 ml-1">(calculating...)</span>}</span>
+        <span className={isCalculating ? 'opacity-40' : ''}>₵{deliveryFee}</span>
+      </div>
+      <div className="flex justify-between text-sm font-bold text-gray-800 pt-1"><span>Total</span><span>₵{subtotal + deliveryFee}</span></div>
     </div>
   </div>
 );
@@ -212,7 +214,7 @@ const DeliveryStep = ({ form, setForm, onNext, addresses, selectedAddressId, set
   );
 };
 
-const ReviewStep = ({ form, cartItems, subtotal, onBack, onPay, paying }) => (
+const ReviewStep = ({ form, cartItems, subtotal, deliveryFee, onBack, onPay, paying }) => (
   <div className="space-y-5">
     <div className="flex items-center gap-2 mb-2">
       <ShoppingBag size={18} className="text-[#F46B03]" />
@@ -247,9 +249,9 @@ const ReviewStep = ({ form, cartItems, subtotal, onBack, onPay, paying }) => (
     {/* Totals */}
     <div className="bg-gray-50 rounded-2xl p-4 space-y-1.5">
       <div className="flex justify-between text-sm text-gray-600"><span>Subtotal</span><span>₵{subtotal}</span></div>
-      <div className="flex justify-between text-sm text-gray-600"><span>Delivery Fee</span><span>₵{DELIVERY_FEE}</span></div>
+      <div className="flex justify-between text-sm text-gray-600"><span>Delivery Fee</span><span>₵{deliveryFee}</span></div>
       <div className="flex justify-between text-base font-bold text-gray-900 pt-1.5 border-t border-gray-200">
-        <span>Total</span><span>₵{subtotal + DELIVERY_FEE}</span>
+        <span>Total</span><span>₵{subtotal + deliveryFee}</span>
       </div>
     </div>
 
@@ -258,14 +260,14 @@ const ReviewStep = ({ form, cartItems, subtotal, onBack, onPay, paying }) => (
         <ArrowLeft size={16} /> Back
       </button>
       <button onClick={onPay} disabled={paying} className="flex-1 py-3 bg-[#F46B03] text-white font-semibold rounded-xl hover:bg-[#C15300] transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
-        {paying ? 'Processing...' : `Pay Now ₵${subtotal + DELIVERY_FEE}`} <ChevronRight size={18} />
+        {paying ? 'Processing...' : `Pay Now ₵${subtotal + deliveryFee}`} <ChevronRight size={18} />
       </button>
     </div>
   </div>
 );
 
 
-const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod }) => {
+const ConfirmationStep = ({ orderId, form, cartItems, subtotal, deliveryFee, paymentMethod }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -310,7 +312,7 @@ const ConfirmationStep = ({ orderId, form, cartItems, subtotal, paymentMethod })
           </div>
           <div>
             <p className="text-xs text-gray-400">Total Paid</p>
-            <p className="font-bold text-gray-800 text-sm mt-0.5">₵{subtotal + DELIVERY_FEE}</p>
+            <p className="font-bold text-gray-800 text-sm mt-0.5">₵{subtotal + deliveryFee}</p>
           </div>
         </div>
       </div>
@@ -345,14 +347,19 @@ const CheckoutPage = () => {
     name: '', phone: '', street: '', city: '', region: 'Greater Accra', note: '',
     saveAddress: true,
   });
-  const [method, setMethod] = useState('mtn');
-  const [momo, setMomo] = useState('');
-  const [card, setCard] = useState({ number: '', name: '', expiry: '', cvv: '' });
-  const [waitingForApproval, setWaitingForApproval] = useState(false);
-  const [pollingCount, setPollingCount] = useState(0);
+  const [celebrationOpen, setCelebrationOpen] = useState(false);
+  const [celebrationStats, setCelebrationStats] = useState(null);
+  const [celebrationProductImage, setCelebrationProductImage] = useState(null);
+
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [waitForPayment, setWaitForPayment] = useState(false);
+
+  const [orderSummary, setOrderSummary] = useState(null);
   
-  const checkoutItems = buyNowItem ? [buyNowItem] : cartItems;
-  const isBuyNow = !!buyNowItem;
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const subtotal = checkoutItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -396,6 +403,32 @@ const CheckoutPage = () => {
       setIsAddingNew(true);
     }
   }, [user]);
+
+  // Dynamic Shipping Fee Calculation
+  useEffect(() => {
+    if (!form.city || !form.region) return;
+
+    const timer = setTimeout(async () => {
+      setIsCalculating(true);
+      try {
+        const res = await api.post('/api/orders/shipping-rates/', {
+          city: form.city,
+          region: form.region,
+          country: 'GH'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setDeliveryFee(data.estimated_fee);
+        }
+      } catch (err) {
+        console.error("Shipping rate fetch failed:", err);
+      } finally {
+        setIsCalculating(false);
+      }
+    }, 800); // 800ms debounce
+
+    return () => clearTimeout(timer);
+  }, [form.city, form.region, cartItems.length]);
 
 
   const handlePay = async () => {
@@ -468,7 +501,8 @@ const CheckoutPage = () => {
               setOrderSummary({
                 items: [...cartItems],
                 subtotal,
-                total: subtotal + DELIVERY_FEE,
+                deliveryFee,
+                total: subtotal + deliveryFee,
                 form: { ...form }
               });
 
@@ -550,14 +584,26 @@ const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main panel */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 lg:p-6 shadow-sm">
-            {step === 0 && <DeliveryStep form={form} setForm={setForm} onNext={() => setStep(1)} />}
-            {step === 1 && <ReviewStep form={form} cartItems={checkoutItems} subtotal={subtotal} onBack={() => setStep(0)} onNext={() => setStep(2)} />}
+            {step === 0 && (
+              <DeliveryStep 
+                form={form} 
+                setForm={setForm} 
+                onNext={() => setStep(1)} 
+                addresses={addresses}
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={setSelectedAddressId}
+                isAddingNew={isAddingNew}
+                setIsAddingNew={setIsAddingNew}
+              />
+            )}
+            {step === 1 && <ReviewStep form={form} cartItems={cartItems} subtotal={subtotal} deliveryFee={deliveryFee} onBack={() => setStep(0)} onPay={handlePay} paying={paying} />}
             {step === 2 && (
               <ConfirmationStep 
                 orderId={orderId} 
                 form={orderSummary?.form || form} 
                 cartItems={orderSummary?.items || []} 
                 subtotal={orderSummary?.subtotal || 0} 
+                deliveryFee={orderSummary?.deliveryFee || deliveryFee}
                 paymentMethod="Hubtel Checkout" 
               />
             )}
@@ -567,7 +613,7 @@ const CheckoutPage = () => {
           {/* Summary sidebar — hidden on confirmation */}
           {step < 2 && (
             <div className="lg:col-span-1">
-              <OrderSummaryPanel cartItems={checkoutItems} subtotal={subtotal} />
+              <OrderSummaryPanel cartItems={cartItems} subtotal={subtotal} deliveryFee={deliveryFee} isCalculating={isCalculating} />
             </div>
           )}
         </div>

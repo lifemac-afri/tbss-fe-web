@@ -98,7 +98,7 @@ export default function UsersAdminPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div data-tour="customers-list" className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-2 border-[#F46B03] border-t-transparent rounded-full animate-spin" /></div>
         ) : (
