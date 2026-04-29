@@ -54,6 +54,7 @@ export default {
       screens: {
         xs: '480px',
       },
+
     },
   },
   plugins: [],
