@@ -21,15 +21,20 @@ const BOOK_MARGINS = [
   '-ml-8  md:-ml-9  lg:-ml-12',
 ];
 
-const Hero = () => {
-  const [images, setImages] = useState(null);
+// heroImages can be injected by a parent (e.g. HomePage via /api/homepage/).
+// If not provided, falls back to fetching /api/hero-images/ directly.
+const Hero = ({ heroImages: propImages }) => {
+  const [fetchedImages, setFetchedImages] = useState(null);
 
   useEffect(() => {
+    if (propImages !== undefined) return; // parent supplied data
     fetch(`${API_BASE}/api/hero-images/`)
       .then((r) => r.ok ? r.json() : [])
-      .then((data) => setImages(Array.isArray(data) ? data : []))
-      .catch(() => setImages([]));
-  }, []);
+      .then((data) => setFetchedImages(Array.isArray(data) ? data : []))
+      .catch(() => setFetchedImages([]));
+  }, [propImages]);
+
+  const images = propImages !== undefined ? propImages : fetchedImages;
 
   const books = images && images.length > 0 ? images.slice(0, 4) : null;
 
