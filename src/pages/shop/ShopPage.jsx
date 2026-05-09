@@ -624,53 +624,41 @@ const ShopPage = () => {
               )}
 
               {/* Pagination */}
-              {!loading && totalPages > 1 && (() => {
-                const WINDOW = 10;
-                const pages = [];
-                let start = Math.max(1, Math.min(page - Math.floor(WINDOW / 2), totalPages - WINDOW + 1));
-                let end = Math.min(totalPages, start + WINDOW - 1);
-                start = Math.max(1, end - WINDOW + 1);
-
-                if (start > 1) { pages.push(1); if (start > 2) pages.push('…'); }
-                for (let p = start; p <= end; p++) pages.push(p);
-                if (end < totalPages) { if (end < totalPages - 1) pages.push('…'); pages.push(totalPages); }
-
-                return (
-                  <div className="flex justify-center items-center gap-1.5 mt-8 flex-wrap">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="h-9 px-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#F46B03] disabled:opacity-40 disabled:cursor-not-allowed bg-white transition-colors"
-                    >
-                      Previous
-                    </button>
-                    {pages.map((p, i) =>
-                      p === '…' ? (
-                        <span key={`ellipsis-${i}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">…</span>
-                      ) : (
-                        <button
-                          key={p}
-                          onClick={() => setPage(p)}
-                          className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                            p === page
-                              ? 'bg-[#F46B03] text-white'
-                              : 'bg-white border border-gray-200 text-gray-700 hover:border-[#F46B03]'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      )
-                    )}
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      className="h-9 px-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#F46B03] disabled:opacity-40 disabled:cursor-not-allowed bg-white transition-colors"
-                    >
-                      Next
-                    </button>
-                  </div>
-                );
-              })()}
+              {!loading && totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="h-9 px-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#F46B03] disabled:opacity-40 disabled:cursor-not-allowed bg-white transition-colors"
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                    const p = start + i;
+                    return p <= totalPages ? (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                          p === page
+                            ? 'bg-[#F46B03] text-white'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:border-[#F46B03]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ) : null;
+                  })}
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="h-9 px-4 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#F46B03] disabled:opacity-40 disabled:cursor-not-allowed bg-white transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
