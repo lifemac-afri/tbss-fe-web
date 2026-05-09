@@ -361,6 +361,9 @@ const CheckoutPage = () => {
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
+  const checkoutItems = buyNowItem ? [buyNowItem] : cartItems;
+  const isBuyNow = !!buyNowItem;
+
   const subtotal = checkoutItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
   useEffect(() => {
