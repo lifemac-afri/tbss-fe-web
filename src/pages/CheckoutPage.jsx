@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ChevronRight, CheckCircle, MapPin, CreditCard, ShoppingBag, ArrowLeft, Copy } from 'lucide-react';
 import CheckoutSdk from '@hubteljs/checkout';
