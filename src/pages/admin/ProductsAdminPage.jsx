@@ -18,7 +18,7 @@ const stockColor = {
 const emptyForm = {
   title: '', author: '', genre: '', price: '', oldPrice: '',
   stock: '', tag: 'Paperback', featured: false, coverImage: '', description: '',
-  publisher: '', pages: '', language: 'English', isbn: '',
+  publisher: '', pages: '', language: 'English', isbn: '', shelf_number: '',
 };
 
 async function uploadToCloudinary(file, onProgress) {
@@ -179,7 +179,7 @@ function BulkUploadModal({ onClose, onImported }) {
   };
 
   const REQUIRED = ['title', 'price', 'stock_quantity'];
-  const OPTIONAL = ['author', 'description', 'old_price', 'genre', 'sub_genre', 'tag', 'is_featured', 'is_bestseller', 'is_new_release', 'image', 'publisher', 'pages', 'language', 'isbn'];
+  const OPTIONAL = ['author', 'description', 'old_price', 'genre', 'sub_genre', 'tag', 'is_featured', 'is_bestseller', 'is_new_release', 'image', 'publisher', 'pages', 'language', 'isbn', 'shelf_number'];
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -393,6 +393,7 @@ export default function ProductsAdminPage() {
       publisher: form.publisher,
       pages: form.pages ? Number(form.pages) : null,
       language: form.language || 'English',
+      shelf_number: form.shelf_number || '',
       is_featured: form.featured,
       is_active: true,
       tag: form.tag,
@@ -695,6 +696,10 @@ export default function ProductsAdminPage() {
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-1.5 block">ISBN</label>
                 <input value={form.isbn || ''} onChange={f('isbn')} placeholder="978-..." className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Shelf Number</label>
+                <input value={form.shelf_number || ''} onChange={f('shelf_number')} placeholder="e.g. A3-12" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]" />
               </div>
             </div>
             <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white rounded-b-2xl">

@@ -368,28 +368,34 @@ const CheckoutPage = () => {
       api.get('/api/users/me/addresses/')
         .then(res => res.json())
         .then(data => {
-          const list = data.results || data;
+          let list = [];
+          if (Array.isArray(data.results)) {
+            list = data.results;
+          } else if (Array.isArray(data)) {
+            list = data;
+          }
+          
           setAddresses(list);
           const def = list.find(a => a.is_default);
           if (def) {
             setSelectedAddressId(def.id);
             setForm({
-              name: def.full_name,
-              phone: def.phone_number,
-              street: def.street_address,
-              city: def.city,
-              region: def.state_province,
+              name: def.full_name || '',
+              phone: def.phone_number || '',
+              street: def.street_address || '',
+              city: def.city || '',
+              region: def.state_province || '',
               note: '',
               saveAddress: false,
             });
           } else if (list.length > 0) {
             setSelectedAddressId(list[0].id);
             setForm({
-              name: list[0].full_name,
-              phone: list[0].phone_number,
-              street: list[0].street_address,
-              city: list[0].city,
-              region: list[0].state_province,
+              name: list[0].full_name || '',
+              phone: list[0].phone_number || '',
+              street: list[0].street_address || '',
+              city: list[0].city || '',
+              region: list[0].state_province || '',
               note: '',
               saveAddress: false,
             });
@@ -398,7 +404,10 @@ const CheckoutPage = () => {
             setIsAddingNew(true);
           }
         })
-        .catch(err => console.error("Error fetching addresses:", err));
+        .catch(err => {
+          console.error("Error fetching addresses:", err);
+          setIsAddingNew(true);
+        });
     } else {
       setIsAddingNew(true);
     }
