@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useToast } from '../../components/Toast';
+import api from '../../lib/api';
 import Pagination from '../../components/admin/Pagination';
 
 const SECTIONS = [
@@ -67,6 +69,161 @@ const SECTIONS = [
   },
 ];
 
+const HERO_KEY = 'hero_images';
+
+function HeroImagesPanel() {
+  const toast = useToast();
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const fetchImages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/admin/hero-images/');
+      const data = await res.json();
+      setImages(Array.isArray(data) ? data : []);
+    } catch { toast.error('Failed to load hero images'); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchImages(); }, [fetchImages]);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      fd.append('order', images.length);
+      const res = await api.post('/api/admin/hero-images/', fd);
+      const data = await res.json();
+      if (res.ok) { toast.success('Image uploaded'); setImages(p => [...p, data]); }
+      else toast.error(data.detail || 'Upload failed');
+    } catch { toast.error('Upload failed'); }
+    finally { setUploading(false); }
+  };
+
+  const handleToggle = async (img) => {
+    setTogglingId(img.id);
+    try {
+      const res = await api.patch(`/api/admin/hero-images/${img.id}/`, { is_active: !img.is_active });
+      const data = await res.json();
+      if (res.ok) setImages(p => p.map(i => i.id === img.id ? data : i));
+      else toast.error('Failed to update');
+    } catch { toast.error('Failed to update'); }
+    finally { setTogglingId(null); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this hero image?')) return;
+    setDeletingId(id);
+    try {
+      const res = await api.del(`/api/admin/hero-images/${id}/`);
+      if (res.ok) { toast.success('Image deleted'); setImages(p => p.filter(i => i.id !== id)); }
+      else toast.error('Delete failed');
+    } catch { toast.error('Delete failed'); }
+    finally { setDeletingId(null); }
+  };
+
+  const handleReorder = async (img, direction) => {
+    const sorted = [...images].sort((a, b) => a.order - b.order);
+    const idx = sorted.findIndex(i => i.id === img.id);
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const swapImg = sorted[swapIdx];
+    try {
+      await Promise.all([
+        api.patch(`/api/admin/hero-images/${img.id}/`, { order: swapImg.order }),
+        api.patch(`/api/admin/hero-images/${swapImg.id}/`, { order: img.order }),
+      ]);
+      setImages(p => p.map(i => {
+        if (i.id === img.id) return { ...i, order: swapImg.order };
+        if (i.id === swapImg.id) return { ...i, order: img.order };
+        return i;
+      }));
+    } catch { toast.error('Failed to reorder'); }
+  };
+
+  const sorted = [...images].sort((a, b) => a.order - b.order);
+  const activeCount = images.filter(i => i.is_active).length;
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100">
+      {/* Panel header */}
+      <div className="p-5 rounded-t-2xl border-b border-orange-200 bg-orange-50">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 bg-[#F46B03]">
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div>
+            <h2 className="font-bold text-gray-900">Hero Images</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Images that rotate on the homepage hero section.</p>
+          </div>
+          <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+            <span className="text-sm font-bold px-3 py-1 rounded-full bg-orange-100 text-orange-700">{activeCount} active</span>
+            <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${uploading ? 'opacity-50 pointer-events-none border-gray-200' : 'border-[#F46B03]/50 hover:border-[#F46B03] hover:bg-[#F46B03]/5'}`}>
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-[#F46B03]">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span className="text-sm font-semibold text-[#F46B03]">{uploading ? 'Uploading…' : 'Upload'}</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Image list */}
+      {loading ? (
+        <div className="flex items-center justify-center h-48">
+          <div className="w-6 h-6 border-2 border-[#F46B03] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : sorted.length === 0 ? (
+        <div className="text-center py-16 text-gray-400 text-sm">No hero images yet. Upload one above.</div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {sorted.map((img, idx) => (
+            <div key={img.id} className="flex items-center gap-4 px-5 py-3.5">
+              <img src={img.image_url} alt="" className="w-24 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0 bg-gray-50" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-1">Position {img.order + 1}</p>
+                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${img.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${img.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  {img.is_active ? 'Visible' : 'Hidden'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={() => handleReorder(img, -1)} disabled={idx === 0}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 disabled:opacity-30 transition-colors" title="Move up">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+                <button onClick={() => handleReorder(img, 1)} disabled={idx === sorted.length - 1}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 disabled:opacity-30 transition-colors" title="Move down">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <button onClick={() => handleToggle(img)} disabled={togglingId === img.id}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50 ${img.is_active ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}>
+                  {togglingId === img.id ? '…' : img.is_active ? 'Hide' : 'Show'}
+                </button>
+                <button onClick={() => handleDelete(img.id)} disabled={deletingId === img.id}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50">
+                  {deletingId === img.id ? '…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SectionsAdminPage() {
   const { get, patch } = useAdmin();
   const [products, setProducts] = useState([]);
@@ -96,6 +253,7 @@ export default function SectionsAdminPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const isHeroTab = activeSection === HERO_KEY;
   const section = SECTIONS.find(s => s.key === activeSection);
 
   const toggleSection = async (product, sectionKey, value) => {
@@ -135,7 +293,7 @@ export default function SectionsAdminPage() {
     green: { toggle: 'bg-green-500', hover: 'hover:bg-green-600', remove: 'bg-green-100 text-green-700 hover:bg-green-200' },
     purple: { toggle: 'bg-purple-500', hover: 'hover:bg-purple-600', remove: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
   };
-  const c = colorMap[section.color];
+  const c = !isHeroTab ? colorMap[section.color] : null;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -150,7 +308,7 @@ export default function SectionsAdminPage() {
       </div>
 
       {/* Section tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         {SECTIONS.map(s => {
           const count = products.filter(p => p[s.key]).length;
           const isActive = activeSection === s.key;
@@ -168,9 +326,28 @@ export default function SectionsAdminPage() {
             </button>
           );
         })}
+        {/* Hero Images card */}
+        {(() => {
+          const isActive = isHeroTab;
+          return (
+            <button
+              onClick={() => setActiveSection(HERO_KEY)}
+              className={`text-left p-4 rounded-2xl border-2 transition-all ${isActive ? 'border-orange-400 ring-1 ring-orange-300/60 bg-white' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2 ${isActive ? 'bg-[#F46B03] text-white' : 'bg-gray-100 text-gray-400'}`}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <p className={`text-sm font-bold ${isActive ? 'text-gray-900' : 'text-gray-600'}`}>Hero Images</p>
+              <p className={`text-xs mt-0.5 font-medium ${isActive ? 'text-gray-500' : 'text-gray-400'}`}>Homepage banner</p>
+            </button>
+          );
+        })()}
       </div>
 
       {/* Active section panel */}
+      {isHeroTab ? <HeroImagesPanel /> : (
       <div className="bg-white rounded-2xl border border-gray-100">
         {/* Panel header */}
         <div className={`p-5 rounded-t-2xl border-b border-gray-100 ${section.bgClass}`}>
@@ -291,6 +468,7 @@ export default function SectionsAdminPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

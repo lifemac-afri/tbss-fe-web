@@ -85,37 +85,46 @@ const BentoGrid = ({ images, label, href, ctaLabel }) => {
   );
 };
 
-const CategoryBentoGrid = () => {
+const toImgArr = (products, placeholder) => {
+  const imgs = (products || []).map(p => p.image).filter(Boolean);
+  return [
+    imgs[0] || placeholder[0],
+    imgs[1] || placeholder[1],
+    imgs[2] || placeholder[2],
+  ];
+};
+
+// games/stationery can be injected by a parent (e.g. HomePage via /api/homepage/).
+// Falls back to individual fetches when not provided.
+const CategoryBentoGrid = ({ games: propGames, stationery: propStationery }) => {
   const [gameImages, setGameImages] = useState(GAMES_PLACEHOLDER);
   const [stationeryImages, setStationeryImages] = useState(STATIONERY_PLACEHOLDER);
 
   useEffect(() => {
-    api.get('/api/products/?category=games&page_size=4&is_active=true')
-      .then(r => r.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.results || []);
-        const imgs = list.map(p => p.image).filter(Boolean);
-        setGameImages([
-          imgs[0] || GAMES_PLACEHOLDER[0],
-          imgs[1] || GAMES_PLACEHOLDER[1],
-          imgs[2] || GAMES_PLACEHOLDER[2],
-        ]);
-      })
-      .catch(() => {});
+    if (propGames !== undefined) {
+      setGameImages(toImgArr(propGames, GAMES_PLACEHOLDER));
+    } else {
+      api.get('/api/products/?category=games&page_size=4&is_active=true')
+        .then(r => r.json())
+        .then(data => setGameImages(toImgArr(
+          Array.isArray(data) ? data : (data.results || []), GAMES_PLACEHOLDER
+        )))
+        .catch(() => {});
+    }
+  }, [propGames]);
 
-    api.get('/api/products/?category=stationery&page_size=4&is_active=true')
-      .then(r => r.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.results || []);
-        const imgs = list.map(p => p.image).filter(Boolean);
-        setStationeryImages([
-          imgs[0] || STATIONERY_PLACEHOLDER[0],
-          imgs[1] || STATIONERY_PLACEHOLDER[1],
-          imgs[2] || STATIONERY_PLACEHOLDER[2],
-        ]);
-      })
-      .catch(() => {});
-  }, []);
+  useEffect(() => {
+    if (propStationery !== undefined) {
+      setStationeryImages(toImgArr(propStationery, STATIONERY_PLACEHOLDER));
+    } else {
+      api.get('/api/products/?category=stationery&page_size=4&is_active=true')
+        .then(r => r.json())
+        .then(data => setStationeryImages(toImgArr(
+          Array.isArray(data) ? data : (data.results || []), STATIONERY_PLACEHOLDER
+        )))
+        .catch(() => {});
+    }
+  }, [propStationery]);
 
   return (
     <section className="w-full px-4 sm:px-6 lg:px-8 py-16">
