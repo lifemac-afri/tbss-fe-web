@@ -28,7 +28,13 @@ const AddressesPage = () => {
     try {
       const res = await api.get('/api/users/me/addresses/');
       const data = await res.json();
-      setAddresses(data.results || data);
+      let list = [];
+      if (Array.isArray(data.results)) {
+        list = data.results;
+      } else if (Array.isArray(data)) {
+        list = data;
+      }
+      setAddresses(list);
     } catch (err) {
       toast.error('Failed to load addresses');
     } finally {

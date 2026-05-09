@@ -36,9 +36,9 @@ class ErrorBoundary extends React.Component {
               >
                 Reload Page
               </button>
-              <Link to="/" className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
+              <a href="/" className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Go Home
-              </Link>
+              </a>
             </div>
           </div>
         </div>
