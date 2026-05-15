@@ -56,6 +56,48 @@ function InlinePrice({ value, onSave, placeholder = '—', prefix = '₵' }) {
   );
 }
 
+// ─── Per-row % discount applier ──────────────────────────────────────────────
+function InlineDiscountApplier({ product, onApply, saving }) {
+  const [editing, setEditing] = useState(false);
+  const [pct, setPct] = useState('');
+  const inputRef = useRef(null);
+
+  const open = () => { setPct(''); setEditing(true); setTimeout(() => inputRef.current?.focus(), 0); };
+
+  const apply = () => {
+    const p = parseFloat(pct);
+    if (isNaN(p) || p <= 0 || p >= 100) return;
+    const base = product.old_price ? parseFloat(product.old_price) : parseFloat(product.price);
+    onApply({ price: (base * (1 - p / 100)).toFixed(2), old_price: base.toFixed(2) });
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button onClick={open} disabled={saving} className="text-[10px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors disabled:opacity-40">
+        Set % off
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        ref={inputRef}
+        type="number" min="1" max="99"
+        value={pct}
+        onChange={e => setPct(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') apply(); if (e.key === 'Escape') setEditing(false); }}
+        className="w-14 border border-[#F46B03] rounded-lg px-2 py-0.5 text-sm font-semibold outline-none bg-orange-50"
+        placeholder="20"
+      />
+      <span className="text-xs text-gray-500">%</span>
+      <button onClick={apply} className="text-xs bg-[#F46B03] text-white px-2 py-0.5 rounded-lg font-semibold">✓</button>
+      <button onClick={() => setEditing(false)} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+  );
+}
+
 // ─── Section toggle pill ──────────────────────────────────────────────────────
 const SECTION_CONFIG = {
   is_bestseller: { short: 'BS', label: 'Bestseller', on: 'bg-amber-100 text-amber-700 border-amber-200', off: 'bg-gray-100 text-gray-400 border-gray-200' },
@@ -107,6 +149,7 @@ export default function DealsAdminPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkPct, setBulkPct] = useState('');
   const PAGE_SIZE = 20;
 
   // Global stats fetched independently of pagination
@@ -198,6 +241,27 @@ export default function DealsAdminPage() {
     const selected = products.filter(p => selectedIds.has(p.id));
     const allOn = selected.length > 0 && selected.every(p => p[key]);
     bulkUpdate({ [key]: !allOn });
+  };
+
+  const bulkApplyDiscount = async (pct) => {
+    const p = parseFloat(pct);
+    if (isNaN(p) || p <= 0 || p >= 100) return;
+    setBulkSaving(true);
+    for (const id of [...selectedIds]) {
+      const product = products.find(pr => pr.id === id);
+      if (!product) continue;
+      const base = product.old_price ? parseFloat(product.old_price) : parseFloat(product.price);
+      try {
+        const updated = await patch(`/api/admin/products/${id}/`, {
+          price: (base * (1 - p / 100)).toFixed(2),
+          old_price: base.toFixed(2),
+        });
+        setProducts(prev => prev.map(pr => pr.id === updated.id ? { ...pr, ...updated } : pr));
+      } catch {}
+    }
+    setBulkSaving(false);
+    setBulkPct('');
+    fetchStats();
   };
 
   const sectionAllOn = (key) => {
@@ -305,6 +369,26 @@ export default function DealsAdminPage() {
               </button>
             );
           })}
+          <div className="w-px h-5 bg-gray-600 shrink-0" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <input
+              type="number" min="1" max="99"
+              value={bulkPct}
+              onChange={e => setBulkPct(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && bulkApplyDiscount(bulkPct)}
+              placeholder="20"
+              disabled={bulkSaving}
+              className="w-14 bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-sm font-semibold text-white outline-none focus:border-[#F46B03] placeholder-gray-500 disabled:opacity-40"
+            />
+            <span className="text-gray-400 text-sm">%</span>
+            <button
+              onClick={() => bulkApplyDiscount(bulkPct)}
+              disabled={bulkSaving || !bulkPct}
+              className="text-xs bg-[#F46B03] hover:bg-[#C15300] text-white font-semibold px-3 py-1 rounded-lg transition-colors disabled:opacity-40"
+            >
+              Apply discount
+            </button>
+          </div>
           {bulkSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />}
         </div>
       )}
@@ -419,6 +503,11 @@ export default function DealsAdminPage() {
                       {/* Discount % + End Deal */}
                       <td className="px-3 py-3.5">
                         <div className="flex flex-col gap-1.5">
+                          <InlineDiscountApplier
+                            product={p}
+                            onApply={fields => updateProduct(p.id, fields)}
+                            saving={isSaving}
+                          />
                           {pct !== null ? (
                             <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full self-start">
                               <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
