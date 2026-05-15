@@ -105,6 +105,8 @@ export default function DealsAdminPage() {
   const [tab, setTab] = useState('all');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
   const PAGE_SIZE = 20;
 
   // Global stats fetched independently of pagination
@@ -167,8 +169,41 @@ export default function DealsAdminPage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const handleTabChange = (newTab) => { setTab(newTab); setPage(1); };
-  const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); };
+  const handleTabChange = (newTab) => { setTab(newTab); setPage(1); setSelectedIds(new Set()); };
+  const handleSearchChange = (e) => { setSearch(e.target.value); setPage(1); setSelectedIds(new Set()); };
+
+  const toggleSelect = (id) => setSelectedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const toggleSelectAll = () => setSelectedIds(
+    selectedIds.size === products.length ? new Set() : new Set(products.map(p => p.id))
+  );
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkUpdate = async (fields) => {
+    setBulkSaving(true);
+    for (const id of [...selectedIds]) {
+      try {
+        const updated = await patch(`/api/admin/products/${id}/`, fields);
+        setProducts(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p));
+      } catch {}
+    }
+    setBulkSaving(false);
+    fetchStats();
+  };
+
+  const bulkToggleSection = (key) => {
+    const selected = products.filter(p => selectedIds.has(p.id));
+    const allOn = selected.length > 0 && selected.every(p => p[key]);
+    bulkUpdate({ [key]: !allOn });
+  };
+
+  const sectionAllOn = (key) => {
+    const selected = products.filter(p => selectedIds.has(p.id));
+    return selected.length > 0 && selected.every(p => p[key]);
+  };
 
   const updateProduct = async (id, fields) => {
     setSaving(prev => ({ ...prev, [id]: true }));
@@ -249,6 +284,31 @@ export default function DealsAdminPage() {
         />
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 flex-wrap bg-gray-900 text-white rounded-2xl px-4 py-3 mb-4">
+          <span className="text-sm font-semibold shrink-0">{selectedIds.size} selected</span>
+          <button onClick={clearSelection} className="text-xs text-gray-400 hover:text-white transition-colors shrink-0">Clear</button>
+          <div className="w-px h-5 bg-gray-600 shrink-0" />
+          <span className="text-xs text-gray-400 shrink-0">Toggle for all:</span>
+          {Object.entries(SECTION_CONFIG).map(([key, cfg]) => {
+            const allOn = sectionAllOn(key);
+            return (
+              <button
+                key={key}
+                onClick={() => bulkToggleSection(key)}
+                disabled={bulkSaving}
+                title={`${allOn ? 'Remove from' : 'Add to'} ${cfg.label} for all selected`}
+                className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${allOn ? cfg.on + ' opacity-100' : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'}`}
+              >
+                {allOn ? `− ${cfg.short}` : `+ ${cfg.short}`}
+              </button>
+            );
+          })}
+          {bulkSaving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />}
+        </div>
+      )}
+
       {/* Legend */}
       <div className="flex items-center gap-4 mb-3 px-1">
         <p className="text-xs text-gray-400 font-medium">Section badges — click to toggle:</p>
@@ -268,6 +328,14 @@ export default function DealsAdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left bg-gray-50/60">
+                  <th className="pl-4 pr-2 py-3.5">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 accent-[#F46B03] cursor-pointer"
+                      checked={products.length > 0 && selectedIds.size === products.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Product</th>
                   <th className="px-3 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     <span className="flex flex-col">
@@ -291,7 +359,15 @@ export default function DealsAdminPage() {
                   const pct = discountPct(p);
                   const isSaving = saving[p.id];
                   return (
-                    <tr key={p.id} className={`border-b border-gray-50 transition-colors ${p.is_todays_deal ? 'bg-green-50/30' : 'hover:bg-gray-50/40'}`}>
+                    <tr key={p.id} className={`border-b border-gray-50 transition-colors ${selectedIds.has(p.id) ? 'bg-orange-50/40' : p.is_todays_deal ? 'bg-green-50/30' : 'hover:bg-gray-50/40'}`}>
+                      <td className="pl-4 pr-2 py-3.5">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 accent-[#F46B03] cursor-pointer"
+                          checked={selectedIds.has(p.id)}
+                          onChange={() => toggleSelect(p.id)}
+                        />
+                      </td>
                       {/* Product */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
@@ -398,7 +474,7 @@ export default function DealsAdminPage() {
                 })}
                 {products.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="text-center py-16 text-gray-400 text-sm">
+                    <td colSpan="7" className="text-center py-16 text-gray-400 text-sm">
                       {search ? 'No products match your search' : 'No products in this view'}
                     </td>
                   </tr>
