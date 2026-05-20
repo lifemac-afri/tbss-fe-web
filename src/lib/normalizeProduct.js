@@ -28,6 +28,9 @@ export function normalizeProduct(p) {
     tag: p.tag || 'Paperback',
     created_at: p.created_at || null,
     is_active: p.is_active !== false,
+    metaTitle: p.meta_title || '',
+    metaDescription: p.meta_description || '',
+    seoKeywords: p.seo_keywords || '',
   };
 }
 
