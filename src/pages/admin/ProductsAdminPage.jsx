@@ -19,6 +19,7 @@ const emptyForm = {
   title: '', author: '', genre: '', price: '', oldPrice: '',
   stock: '', tag: 'Paperback', featured: false, coverImage: '', description: '',
   publisher: '', pages: '', language: 'English', isbn: '', shelf_number: '',
+  metaTitle: '', metaDescription: '', seoKeywords: '',
 };
 
 async function uploadToCloudinary(file, onProgress) {
@@ -340,6 +341,9 @@ export default function ProductsAdminPage() {
     genre: p.genre_name || p.genre?.name || p.genre || '',
     tag: p.tag || '',
     genreId: p.genre?.id ?? p.genre ?? '',
+    metaTitle: p.meta_title || '',
+    metaDescription: p.meta_description || '',
+    seoKeywords: p.seo_keywords || '',
   });
 
   const fetchProducts = useCallback(() => {
@@ -397,6 +401,9 @@ export default function ProductsAdminPage() {
       is_featured: form.featured,
       is_active: true,
       tag: form.tag,
+      meta_title: form.metaTitle,
+      meta_description: form.metaDescription,
+      seo_keywords: form.seoKeywords,
       ...(genreId && { genre: genreId }),
     };
 
@@ -700,6 +707,24 @@ export default function ProductsAdminPage() {
               <div>
                 <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Shelf Number</label>
                 <input value={form.shelf_number || ''} onChange={f('shelf_number')} placeholder="e.g. A3-12" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]" />
+              </div>
+              
+              <div className="col-span-2 mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-gray-900 mb-3">SEO Settings</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Meta Title</label>
+                    <input value={form.metaTitle || ''} onChange={f('metaTitle')} placeholder="Optional: Override default title for search engines" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">Meta Description</label>
+                    <textarea value={form.metaDescription || ''} onChange={f('metaDescription')} rows={2} placeholder="Optional: Short description for search engines" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03] resize-none" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">SEO Keywords</label>
+                    <input value={form.seoKeywords || ''} onChange={f('seoKeywords')} placeholder="e.g. fiction, ghana authors, bestselling" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#F46B03]" />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white rounded-b-2xl">

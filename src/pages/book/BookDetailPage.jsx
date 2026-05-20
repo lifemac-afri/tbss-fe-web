@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Bookmark, ChevronRight, Star, Share2, RotateCcw, Truck, Shield } from 'lucide-react';
 import BookCard from '../../components/BookCard';
+import SEO from '../../components/SEO';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { normalizeProduct } from '../../lib/normalizeProduct';
@@ -157,6 +158,13 @@ const BookDetailPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      <SEO 
+        title={book.metaTitle || book.title}
+        description={book.metaDescription || book.description?.substring(0, 160)}
+        keywords={book.seoKeywords || ''}
+        ogImage={book.coverImage}
+        ogType="product"
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Breadcrumb */}
