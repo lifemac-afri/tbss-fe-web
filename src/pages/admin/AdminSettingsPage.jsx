@@ -43,6 +43,8 @@ function ProfileTab() {
   const [profile, setProfile] = useState({
     first_name: currentUser?.first_name || '',
     last_name: currentUser?.last_name || '',
+    receive_email_notifications: currentUser?.receive_email_notifications ?? true,
+    receive_all_notifications: currentUser?.receive_all_notifications ?? true,
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [passwords, setPasswords] = useState({ old_password: '', new_password: '', confirm: '' });
@@ -100,6 +102,47 @@ function ProfileTab() {
               value={currentUser?.email || ''} readOnly />
             <p className="text-xs text-gray-400 mt-1">Email cannot be changed here.</p>
           </Field>
+
+          {/* Notifications */}
+          <div className="pt-4 border-t border-gray-50">
+            <h3 className="text-sm font-bold text-gray-800 mb-4">Notifications</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Receive All Notifications</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Master switch to turn all notifications on or off.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setProfile(p => ({ 
+                    ...p, 
+                    receive_all_notifications: !p.receive_all_notifications,
+                    // Optionally disable email if all is disabled
+                    ...(p.receive_all_notifications ? { receive_email_notifications: false } : {})
+                  }))}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${profile.receive_all_notifications ? 'bg-[#F46B03]' : 'bg-gray-200'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${profile.receive_all_notifications ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+
+              <div className={`flex items-center justify-between transition-opacity ${!profile.receive_all_notifications ? 'opacity-50' : ''}`}>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Email Notifications</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Receive daily summaries and critical alerts via email.</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={!profile.receive_all_notifications}
+                  onClick={() => setProfile(p => ({ ...p, receive_email_notifications: !p.receive_email_notifications }))}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${!profile.receive_all_notifications ? 'cursor-not-allowed bg-gray-200' : profile.receive_email_notifications ? 'bg-[#F46B03] cursor-pointer' : 'bg-gray-200 cursor-pointer'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${profile.receive_email_notifications && profile.receive_all_notifications ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+            </div>
+          </div>
           <div className="flex justify-end pt-1">
             <button type="submit" disabled={savingProfile}
               className="px-5 py-2.5 bg-[#F46B03] text-white text-sm font-semibold rounded-xl hover:bg-[#C15300] disabled:opacity-50 transition-colors">
