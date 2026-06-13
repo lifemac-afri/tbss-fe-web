@@ -13,11 +13,29 @@ export function AdminProvider({ children }) {
   []);
 
   const patch = useCallback((path, body) =>
-    api.patch(path, body).then((r) => r.json()),
+    api.patch(path, body).then(async (r) => {
+      const data = await r.json();
+      if (!r.ok) {
+        const err = new Error(data?.detail || data?.error || 'Request failed');
+        err.data = data;
+        err.status = r.status;
+        throw err;
+      }
+      return data;
+    }),
   []);
 
   const put = useCallback((path, body) =>
-    api.put(path, body).then((r) => r.json()),
+    api.put(path, body).then(async (r) => {
+      const data = await r.json();
+      if (!r.ok) {
+        const err = new Error(data?.detail || data?.error || 'Request failed');
+        err.data = data;
+        err.status = r.status;
+        throw err;
+      }
+      return data;
+    }),
   []);
 
   const del = useCallback((path) =>
