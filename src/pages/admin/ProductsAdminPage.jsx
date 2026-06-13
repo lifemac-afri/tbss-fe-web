@@ -313,7 +313,7 @@ function BulkUploadModal({ onClose, onImported }) {
 }
 
 export default function ProductsAdminPage() {
-  const { get, post, put, del } = useAdmin();
+  const { get, post, patch, del } = useAdmin();
   const [products, setProducts] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -324,6 +324,7 @@ export default function ProductsAdminPage() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showBulk, setShowBulk] = useState(false);
   const [page, setPage] = useState(1);
@@ -379,11 +380,12 @@ export default function ProductsAdminPage() {
     setModal('add');
   };
   const openEdit = (p) => { setForm({ ...emptyForm, ...p, coverImage: p.coverImage || '' }); setModal(p); };
-  const closeModal = () => { setModal(null); setSaving(false); };
+  const closeModal = () => { setModal(null); setSaving(false); setSaveError(''); };
 
   const handleSave = async () => {
     setSaving(true);
-    const genreId = genres.find(g => g.name === form.genre)?.id || null;
+    setSaveError('');
+    const genreId = genres.find(g => g.name === form.genre)?.id || form.genreId || null;
 
     const payload = {
       title: form.title,
@@ -412,7 +414,7 @@ export default function ProductsAdminPage() {
         await post('/api/admin/products/', payload);
         fetchProducts();
       } else {
-        const updated = await put(`/api/admin/products/${modal.id}/`, payload);
+        const updated = await patch(`/api/admin/products/${modal.id}/`, payload);
         if (search || genreFilter !== 'All' || stockFilter !== 'All') {
           fetchProducts();
         } else {
@@ -420,6 +422,16 @@ export default function ProductsAdminPage() {
         }
       }
       closeModal();
+    } catch (err) {
+      const errData = err.data;
+      if (errData && typeof errData === 'object') {
+        const messages = Object.entries(errData)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .join('\n');
+        setSaveError(messages);
+      } else {
+        setSaveError(err.message || 'Save failed. Please try again.');
+      }
     } finally {
       setSaving(false);
     }
@@ -727,7 +739,14 @@ export default function ProductsAdminPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white rounded-b-2xl">
+            <div className="px-6 pb-0 sticky bottom-0 bg-white">
+              {saveError && (
+                <div className="mb-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 whitespace-pre-line">
+                  {saveError}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 p-6 pt-3 border-t border-gray-100 sticky bottom-0 bg-white rounded-b-2xl">
               <button onClick={closeModal} className="flex-1 border border-gray-200 text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50">Cancel</button>
               <button
                 onClick={handleSave}
