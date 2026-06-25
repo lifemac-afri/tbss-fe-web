@@ -14,6 +14,17 @@ function normalizeItem(item) {
     subtotal: parseFloat(item.subtotal || 0),
     coverImage: item.image || item.coverImage || null,
     author: item.author || '',
+    stock_quantity: typeof item.product_stock_quantity === 'number'
+      ? item.product_stock_quantity
+      : typeof item.stock_quantity === 'number'
+        ? item.stock_quantity
+        : typeof item.stock === 'number'
+          ? item.stock
+          : typeof item.product?.stock_quantity === 'number'
+            ? item.product.stock_quantity
+            : typeof item.product?.stock === 'number'
+              ? item.product.stock
+              : 99,
   };
 }
 
@@ -51,10 +62,17 @@ export const CartProvider = ({ children }) => {
   const addToCart = useCallback(async (product, qty = 1) => {
     const existingIdx = cartItems.findIndex((i) => i.productId === product.id || i.id === product.id);
 
+    const maxAllowed = typeof product.stock_quantity === 'number'
+      ? product.stock_quantity
+      : typeof product.stock === 'number'
+        ? product.stock
+        : 99;
+
     if (isAuthenticated) {
       if (existingIdx >= 0) {
         const item = cartItems[existingIdx];
-        const newQty = item.quantity + qty;
+        const itemMax = typeof item.stock_quantity === 'number' ? item.stock_quantity : maxAllowed;
+        const newQty = Math.min(item.quantity + qty, itemMax);
         setCartItems((prev) =>
           prev.map((i, idx) => idx === existingIdx ? { ...i, quantity: newQty } : i)
         );
@@ -62,18 +80,20 @@ export const CartProvider = ({ children }) => {
           await api.patch(`/api/cart/items/${item.id}/`, { quantity: newQty });
         } catch {}
       } else {
+        const cappedQty = Math.min(qty, maxAllowed);
         const optimistic = {
           id: `temp_${Date.now()}`,
           productId: product.id,
           title: product.title,
           price: parseFloat(product.price || 0),
-          quantity: qty,
+          quantity: cappedQty,
           coverImage: product.coverImage || product.image || null,
           author: product.author || '',
+          stock_quantity: maxAllowed,
         };
         setCartItems((prev) => [...prev, optimistic]);
         try {
-          const res = await api.post('/api/cart/items/', { product: product.id, quantity: qty });
+          const res = await api.post('/api/cart/items/', { product: product.id, quantity: cappedQty });
           if (res.ok) {
             await loadCart();
           }
@@ -83,22 +103,27 @@ export const CartProvider = ({ children }) => {
       setCartItems((prev) => {
         const existing = prev.find((i) => (i.productId || i.id) === product.id);
         if (existing) {
+          const itemMax = typeof existing.stock_quantity === 'number' ? existing.stock_quantity : maxAllowed;
+          const newQty = Math.min(existing.quantity + qty, itemMax);
           return prev.map((i) =>
-            (i.productId || i.id) === product.id ? { ...i, quantity: i.quantity + qty } : i
+            (i.productId || i.id) === product.id ? { ...i, quantity: newQty } : i
           );
         }
+        const cappedQty = Math.min(qty, maxAllowed);
         return [...prev, {
           id: product.id,
           productId: product.id,
           title: product.title,
           price: parseFloat(product.price || 0),
-          quantity: qty,
+          quantity: cappedQty,
           coverImage: product.coverImage || product.image || null,
           author: product.author || '',
+          stock_quantity: maxAllowed,
         }];
       });
       try {
-        await api.post('/api/cart/items/', { product: product.id, quantity: qty });
+        const cappedQty = Math.min(qty, maxAllowed);
+        await api.post('/api/cart/items/', { product: product.id, quantity: cappedQty });
       } catch {}
     }
   }, [isAuthenticated, cartItems, loadCart]);
@@ -116,12 +141,15 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = useCallback(async (itemId, quantity) => {
     if (quantity < 1) { removeFromCart(itemId); return; }
     const item = cartItems.find((i) => i.id === itemId || i.productId === itemId);
+    if (!item) return;
+    const maxAllowed = typeof item.stock_quantity === 'number' ? item.stock_quantity : 99;
+    const cappedQuantity = Math.min(quantity, maxAllowed);
     setCartItems((prev) =>
-      prev.map((i) => (i.id === itemId || i.productId === itemId) ? { ...i, quantity } : i)
+      prev.map((i) => (i.id === itemId || i.productId === itemId) ? { ...i, quantity: cappedQuantity } : i)
     );
     if (item?.id && !String(item.id).startsWith('temp_')) {
       try {
-        await api.patch(`/api/cart/items/${item.id}/`, { quantity });
+        await api.patch(`/api/cart/items/${item.id}/`, { quantity: cappedQuantity });
       } catch {}
     }
   }, [cartItems, removeFromCart]);
