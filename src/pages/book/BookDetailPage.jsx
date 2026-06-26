@@ -245,9 +245,16 @@ const BookDetailPage = () => {
             </div>
 
             {/* Stock status */}
-            <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full mb-5 ${stockColors[book.stockStatus] || stockColors['In-stock']}`}>
-              {book.stockStatus}
-            </span>
+            <div className="flex items-center gap-2 mb-5">
+              <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${stockColors[book.stockStatus] || stockColors['In-stock']}`}>
+                {book.stockStatus}
+              </span>
+              {book.stockStatus !== 'Out of stock' && typeof book.stock_quantity === 'number' && book.stock_quantity <= 5 && book.stock_quantity > 0 && (
+                <span className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full animate-pulse border border-red-100">
+                  Only {book.stock_quantity} left in stock
+                </span>
+              )}
+            </div>
 
 
             {/* Price */}
@@ -263,12 +270,22 @@ const BookDetailPage = () => {
 
             {/* Quantity + Add to cart */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-                <button onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors text-lg font-bold">−</button>
+              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
+                <button
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  disabled={qty <= 1}
+                  className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors text-lg font-bold"
+                >
+                  −
+                </button>
                 <span className="w-10 text-center font-semibold text-sm">{qty}</span>
-                <button onClick={() => setQty((q) => q + 1)}
-                  className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors text-lg font-bold">+</button>
+                <button
+                  onClick={() => setQty((q) => q + 1)}
+                  disabled={qty >= (typeof book.stock_quantity === 'number' ? book.stock_quantity : 99)}
+                  className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors text-lg font-bold"
+                >
+                  +
+                </button>
               </div>
               <button
                 onClick={handleAddToCart}

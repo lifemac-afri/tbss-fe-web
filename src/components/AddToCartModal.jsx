@@ -110,34 +110,52 @@ const AddToCartModal = () => {
         </div>
 
         {/* Quantity selector */}
-        <div className="px-5 py-5">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quantity</p>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
-              <button
-                onClick={() => setQty(q => Math.max(1, q - 1))}
-                disabled={qty <= 1}
-                className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
-              >
-                <Minus size={16} />
-              </button>
-              <span className="w-12 text-center text-base font-bold text-gray-900">{qty}</span>
-              <button
-                onClick={() => setQty(q => q + 1)}
-                className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
+        {(() => {
+          const maxAllowed = typeof book.stock_quantity === 'number'
+            ? book.stock_quantity
+            : typeof book.stock === 'number'
+              ? book.stock
+              : 99;
 
-            <div className="flex-1 text-right">
-              <p className="text-xs text-gray-400">Subtotal</p>
-              <p className="text-xl font-bold text-gray-900">
-                <span className="text-base font-normal">₵</span>{lineTotal}
-              </p>
+          return (
+            <div className="px-5 py-5">
+              <div className="flex justify-between items-center mb-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Quantity</p>
+                {maxAllowed <= 5 && maxAllowed > 0 && (
+                  <span className="text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full animate-pulse">
+                    Only {maxAllowed} left
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setQty(q => Math.max(1, q - 1))}
+                    disabled={qty <= 1}
+                    className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="w-12 text-center text-base font-bold text-gray-900">{qty}</span>
+                  <button
+                    onClick={() => setQty(q => q + 1)}
+                    disabled={qty >= maxAllowed}
+                    className="w-11 h-11 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                <div className="flex-1 text-right">
+                  <p className="text-xs text-gray-400">Subtotal</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    <span className="text-base font-normal">₵</span>{lineTotal}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Action buttons */}
         <div className="px-5 pb-6 flex gap-3">

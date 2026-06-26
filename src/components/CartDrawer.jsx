@@ -116,11 +116,16 @@ const CartDrawer = () => {
                         className="h-3 w-auto"
                       />
                       <span className="text-[10px] text-gray-400">{item.tag}</span>
+                      {typeof item.stock_quantity === 'number' && item.stock_quantity <= 5 && (
+                        <span className="text-[10px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded ml-2 animate-pulse">
+                          Only {item.stock_quantity} left
+                        </span>
+                      )}
                     </div>
 
                     {/* Price + Qty controls */}
                     <div className="flex items-center justify-between mt-2.5">
-                      <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
@@ -130,7 +135,8 @@ const CartDrawer = () => {
                         <span className="w-7 text-center text-xs font-bold text-gray-900">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+                          disabled={item.quantity >= (typeof item.stock_quantity === 'number' ? item.stock_quantity : 99)}
+                          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30"
                         >
                           <Plus size={12} />
                         </button>
