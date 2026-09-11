@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Bookmark, ChevronRight, Star, Share2, RotateCcw, Truck, Shield } from 'lucide-react';
 import BookCard from '../../components/BookCard';
 import SEO from '../../components/SEO';
+import ShareModal from '../../components/ShareModal';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { normalizeProduct } from '../../lib/normalizeProduct';
@@ -39,6 +40,7 @@ const BookDetailPage = () => {
   const [error, setError] = useState('');
   const [qty, setQty] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const { isAuthenticated } = useAuth();
 
@@ -65,7 +67,7 @@ const BookDetailPage = () => {
       });
       if (!res.ok) {
         let errData = {};
-        try { errData = await res.json(); } catch {}
+        try { errData = await res.json(); } catch { }
         throw new Error(errData.non_field_errors?.[0] || errData.detail || 'Failed to submit review.');
       }
       setReviewSuccess(true);
@@ -158,12 +160,14 @@ const BookDetailPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <SEO 
-        title={book.metaTitle || book.title}
-        description={book.metaDescription || book.description?.substring(0, 160)}
-        keywords={book.seoKeywords || ''}
+      <SEO
+        title={book.metaTitle || (book.author ? `${book.title} by ${book.author}` : book.title)}
+        description={book.metaDescription || `${book.title} ${book.author ? `by ${book.author}` : ''} - ₵${book.price}. ${book.description?.substring(0, 140) || ''}`}
+        keywords={book.seoKeywords || `${book.title}, ${book.author || ''}, ${book.genre || ''}, bookshop ghana`}
         ogImage={book.coverImage}
         ogType="product"
+        price={book.price}
+        canonicalUrl={`/books/${book.id}`}
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -200,17 +204,16 @@ const BookDetailPage = () => {
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => toggleWishlist(book)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border font-medium text-sm transition-colors ${
-                    saved
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border font-medium text-sm transition-colors ${saved
                       ? 'bg-orange-50 border-[#F46B03] text-[#F46B03]'
                       : 'border-gray-200 text-gray-600 hover:border-[#F46B03] hover:text-[#F46B03]'
-                  }`}
+                    }`}
                 >
                   <Bookmark size={16} className={saved ? 'fill-[#F46B03] text-[#F46B03]' : ''} />
                   {saved ? 'Saved' : 'Wishlist'}
                 </button>
                 <button
-                  onClick={() => navigator.share?.({ title: book.title, url: window.location.href })}
+                  onClick={() => setIsShareOpen(true)}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:border-[#F46B03] hover:text-[#F46B03] transition-colors"
                 >
                   <Share2 size={16} />
@@ -290,13 +293,12 @@ const BookDetailPage = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={book.stockStatus === 'Out of stock'}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${
-                  book.stockStatus === 'Out of stock'
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all ${book.stockStatus === 'Out of stock'
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : addedToCart
-                    ? 'bg-green-500 text-white'
-                    : 'bg-[#F46B03] hover:bg-[#C15300] text-white active:scale-95'
-                }`}
+                      ? 'bg-green-500 text-white'
+                      : 'bg-[#F46B03] hover:bg-[#C15300] text-white active:scale-95'
+                  }`}
               >
                 <ShoppingCart size={18} />
                 {addedToCart ? 'Added to cart!' : book.stockStatus === 'Out of stock' ? 'Out of Stock' : 'Add to Cart'}
@@ -338,7 +340,7 @@ const BookDetailPage = () => {
         {/* Reviews Section */}
         <div className="mt-12 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-sm">
           <h2 className="text-xl font-bold text-gray-900 font-poppins mb-6">Customer Reviews</h2>
-          
+
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Reviews List */}
             <div className="flex-1 space-y-6">
@@ -438,6 +440,12 @@ const BookDetailPage = () => {
           </div>
         )}
       </div>
+
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        book={book}
+      />
     </div>
   );
 };

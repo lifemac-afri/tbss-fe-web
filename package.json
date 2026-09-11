@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "server": "node server.js",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
