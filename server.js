@@ -10,49 +10,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const API_BASE = process.env.VITE_API_URL || 'https://tbssgh.com';
 
-const fallbackBooks = [
-  {
-    id: 1,
-    title: "How Rich People Think",
-    author: "Steve Siebold",
-    price: 145,
-    coverImage: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop",
-    description: "Explore the stark differences between the mental approach of the wealthy and the middle class. Steve Siebold breaks down 21 ways the rich see and think about money differently."
-  },
-  {
-    id: 2,
-    title: "The Temporary Roomie",
-    author: "Sarah Adams",
-    price: 145,
-    coverImage: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=400&auto=format&fit=crop",
-    description: "When Sadie agrees to move in with Dr. Joshua Gibson temporarily, she expects it to be simple. A warm, funny, and romantic novel."
-  },
-  {
-    id: 3,
-    title: "The Subtle Art of Not Giving A Fuck",
-    author: "Mark Manson",
-    price: 145,
-    coverImage: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=400&auto=format&fit=crop",
-    description: "Mark Manson argues that the key to living a good life is choosing what truly matters. A refreshing, counterintuitive guide."
-  },
-  {
-    id: 4,
-    title: "Educated",
-    author: "Tara Westover",
-    price: 145,
-    coverImage: "https://images.unsplash.com/photo-1512591050681-17c1693fa111?q=80&w=400&auto=format&fit=crop",
-    description: "Tara Westover grew up in the mountains of Idaho with survivalist parents. A powerful memoir about education and self-reinvention."
-  },
-  {
-    id: 6,
-    title: "Atomic Habits",
-    author: "James Clear",
-    price: 220,
-    coverImage: "https://images.unsplash.com/photo-1581447100595-37710ca14fbe?q=80&w=400&auto=format&fit=crop",
-    description: "Tiny changes, remarkable results. James Clear reveals how small daily habits compound into life-changing transformation."
-  }
-];
-
 // Helper to escape HTML characters in meta content
 function escapeHtml(str) {
   if (!str) return '';
@@ -73,12 +30,8 @@ export async function injectBookMetaTags(html, bookId, host, protocol = 'https')
     if (res.ok) {
       book = await res.json();
     }
-  } catch (e) {
-    // API network error or offline fallback
-  }
-
-  if (!book) {
-    book = fallbackBooks.find((b) => String(b.id) === String(bookId));
+  } catch {
+    // API network error or unreachable
   }
 
   if (!book) return html;
@@ -88,7 +41,7 @@ export async function injectBookMetaTags(html, bookId, host, protocol = 'https')
   const rawDesc = `${book.title} ${book.author ? `by ${book.author}` : ''} - ₵${book.price || ''}. ${book.description || ''}`.substring(0, 200);
   const description = escapeHtml(rawDesc);
 
-  let coverImage = book.coverImage || book.image || '/og.png';
+  let coverImage = book.image || book.coverImage || '/og.png';
   if (!coverImage.startsWith('http://') && !coverImage.startsWith('https://')) {
     const baseUrl = `${protocol}://${host}`;
     coverImage = `${baseUrl}${coverImage.startsWith('/') ? '' : '/'}${coverImage}`;
@@ -135,7 +88,7 @@ app.get('/books/:id', async (req, res) => {
     const html = await injectBookMetaTags(rawHtml, req.params.id, host, protocol);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
-  } catch (err) {
+  } catch {
     res.sendFile(indexHtmlPath);
   }
 });
