@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/books/:id*",
+      "destination": "/api/og"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
