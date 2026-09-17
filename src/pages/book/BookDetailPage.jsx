@@ -8,7 +8,9 @@ import SEO from '../../components/SEO';
 import ShareModal from '../../components/ShareModal';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { normalizeProduct } from '../../lib/normalizeProduct';
+import { normalizeProduct, DEFAULT_COVER } from '../../lib/normalizeProduct';
+import paperbackIcon from '../../assets/icons/paperback.svg';
+import hardcoverIcon from '../../assets/icons/hardcover.svg';
 
 const StarRating = ({ rating, size = 16 }) => {
   const full = Math.floor(rating);
@@ -193,7 +195,15 @@ const BookDetailPage = () => {
             <div className="sticky top-24">
               <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-xl bg-white">
                 {book.coverImage ? (
-                  <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
+                  <img
+                    src={book.coverImage}
+                    alt={book.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = DEFAULT_COVER;
+                    }}
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-orange-50 text-[#F46B03]">
                     <BookIcon />
@@ -225,8 +235,14 @@ const BookDetailPage = () => {
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            {/* Category / genre tags */}
+            {/* Category / genre / format tags */}
             <div className="flex flex-wrap gap-2 mb-3">
+              {book.tag && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full px-3 py-1 border border-gray-200">
+                  <img src={book.tag === 'Hardcover' ? hardcoverIcon : paperbackIcon} alt={book.tag} className="h-3.5 w-auto" />
+                  {book.tag}
+                </span>
+              )}
               {book.category && (
                 <span className="text-xs font-semibold bg-orange-50 text-[#F46B03] rounded-full px-3 py-1">{book.category}</span>
               )}
@@ -329,6 +345,15 @@ const BookDetailPage = () => {
             <div className="bg-white rounded-xl border border-gray-100 p-4">
               <h3 className="font-bold text-gray-900 mb-3 text-sm">Book Details</h3>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {book.tag && (
+                  <>
+                    <dt className="text-gray-500">Format</dt>
+                    <dd className="font-medium text-gray-700 flex items-center gap-1.5">
+                      <img src={book.tag === 'Hardcover' ? hardcoverIcon : paperbackIcon} alt={book.tag} className="h-4 w-auto" />
+                      {book.tag}
+                    </dd>
+                  </>
+                )}
                 {book.isbn && <><dt className="text-gray-500">ISBN</dt><dd className="font-medium text-gray-700">{book.isbn}</dd></>}
                 {book.genre && <><dt className="text-gray-500">Genre</dt><dd className="font-medium text-gray-700">{book.genre}</dd></>}
                 {book.category && <><dt className="text-gray-500">Category</dt><dd className="font-medium text-gray-700">{book.category}</dd></>}

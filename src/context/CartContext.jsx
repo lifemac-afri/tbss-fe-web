@@ -1,19 +1,34 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import api from '../lib/api';
+import api, { API_BASE } from '../lib/api';
 import { useAuth } from './AuthContext';
+import { DEFAULT_COVER } from '../lib/normalizeProduct';
 
 const CartContext = createContext(null);
 
 function normalizeItem(item) {
+  let rawImage = item.product_image || item.product_cover_image || item.image || item.coverImage || item.product?.coverImage || item.product?.image || item.product?.cover_image || null;
+
+  if (rawImage && typeof rawImage === 'string') {
+    if (!rawImage.startsWith('http://') && !rawImage.startsWith('https://') && !rawImage.startsWith('data:')) {
+      const baseUrl = API_BASE || '';
+      rawImage = `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+    }
+  } else {
+    rawImage = DEFAULT_COVER;
+  }
+
+  const tag = item.product_tag || item.tag || item.format || item.product_format || item.product?.tag || item.product?.format || item.cover_type || item.binding || 'Paperback';
+
   return {
     id: item.id,
-    productId: item.product,
-    title: item.product_name || item.title || 'Unknown',
-    price: parseFloat(item.product_price || item.price || 0),
+    productId: item.product?.id || item.product || item.productId || item.id,
+    title: item.product_name || item.product?.title || item.title || 'Unknown',
+    price: parseFloat(item.product_price || item.price || item.product?.price || 0),
     quantity: item.quantity || 1,
     subtotal: parseFloat(item.subtotal || 0),
-    coverImage: item.image || item.coverImage || null,
-    author: item.author || '',
+    coverImage: rawImage,
+    author: item.product_author || item.author || item.product?.author || '',
+    tag: tag,
     stock_quantity: typeof item.product_stock_quantity === 'number'
       ? item.product_stock_quantity
       : typeof item.stock_quantity === 'number'
@@ -68,6 +83,14 @@ export const CartProvider = ({ children }) => {
         ? product.stock
         : 99;
 
+    let rawImg = product.coverImage || product.image || product.product_image || DEFAULT_COVER;
+    if (rawImg && typeof rawImg === 'string' && !rawImg.startsWith('http://') && !rawImg.startsWith('https://') && !rawImg.startsWith('data:')) {
+      const baseUrl = API_BASE || '';
+      rawImg = `${baseUrl}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`;
+    }
+
+    const itemTag = product.tag || product.product_tag || product.format || product.product_format || 'Paperback';
+
     if (isAuthenticated) {
       if (existingIdx >= 0) {
         const item = cartItems[existingIdx];
@@ -87,8 +110,9 @@ export const CartProvider = ({ children }) => {
           title: product.title,
           price: parseFloat(product.price || 0),
           quantity: cappedQty,
-          coverImage: product.coverImage || product.image || null,
+          coverImage: rawImg,
           author: product.author || '',
+          tag: itemTag,
           stock_quantity: maxAllowed,
         };
         setCartItems((prev) => [...prev, optimistic]);
@@ -116,8 +140,9 @@ export const CartProvider = ({ children }) => {
           title: product.title,
           price: parseFloat(product.price || 0),
           quantity: cappedQty,
-          coverImage: product.coverImage || product.image || null,
+          coverImage: rawImg,
           author: product.author || '',
+          tag: itemTag,
           stock_quantity: maxAllowed,
         }];
       });

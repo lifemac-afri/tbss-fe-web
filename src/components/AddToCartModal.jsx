@@ -85,6 +85,10 @@ const AddToCartModal = () => {
               src={book.coverImage}
               alt={book.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop";
+              }}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -93,7 +97,14 @@ const AddToCartModal = () => {
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">{book.author}</p>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-gray-400">{book.tag}</span>
+              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 font-medium px-2 py-0.5 rounded text-[11px] border border-gray-200">
+                <img
+                  src={book.tag === 'Hardcover' ? hardcoverIcon : paperbackIcon}
+                  alt={book.tag || 'Paperback'}
+                  className="h-3 w-auto"
+                />
+                <span>{book.tag || 'Paperback'}</span>
+              </span>
               {book.discount && (
                 <span className="text-[10px] font-bold text-[#E11D48] bg-red-50 px-1.5 py-0.5 rounded">
                   {book.discount}

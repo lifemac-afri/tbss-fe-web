@@ -1,7 +1,26 @@
+import { API_BASE } from './api';
+
+export const DEFAULT_COVER = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop";
+
 export function normalizeProduct(p) {
   const price = parseFloat(p.price || p.product_price || 0);
   const oldPrice = p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : null);
   const stockQty = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
+  
+  let rawImage = p.image || p.coverImage || p.product_image || p.cover_image || p.product_cover_image || null;
+  if (rawImage && typeof rawImage === 'string') {
+    if (!rawImage.startsWith('http://') && !rawImage.startsWith('https://') && !rawImage.startsWith('data:')) {
+      const baseUrl = API_BASE || '';
+      if (baseUrl) {
+        rawImage = `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+      }
+    }
+  } else {
+    rawImage = DEFAULT_COVER;
+  }
+
+  const tag = p.tag || p.product_tag || p.format || p.product_format || p.cover_type || p.binding || 'Paperback';
+
   return {
     id: p.id,
     title: p.title || 'Unknown',
@@ -18,14 +37,14 @@ export function normalizeProduct(p) {
     })(),
     stock_quantity: stockQty,
     stockStatus: stockQty > 0 ? 'In-stock' : 'Out of stock',
-    coverImage: p.image || p.coverImage || null,
+    coverImage: rawImage,
     isbn: p.isbn || '',
     genre: p.genre_name || p.genre?.name || '',
     genreSlug: p.genre?.slug || p.genre_slug || '',
     rating: parseFloat(p.average_rating || p.rating || 0),
     reviews: parseInt(p.review_count || (!Array.isArray(p.reviews) ? p.reviews : 0) || 0, 10),
     reviewList: Array.isArray(p.reviews) ? p.reviews : [],
-    tag: p.tag || 'Paperback',
+    tag: tag,
     created_at: p.created_at || null,
     is_active: p.is_active !== false,
     metaTitle: p.meta_title || '',

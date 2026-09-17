@@ -54,7 +54,15 @@ const OrderSummaryPanel = ({ cartItems, subtotal, deliveryFee, isCalculating }) 
     <div className="space-y-2 max-h-52 overflow-y-auto">
       {cartItems.map((item) => (
         <div key={item.id} className="flex items-center gap-2.5">
-          <img src={item.coverImage} alt={item.title} className="w-10 h-13 object-cover rounded-lg flex-shrink-0" />
+          <img
+            src={item.coverImage}
+            alt={item.title}
+            className="w-10 h-13 object-cover rounded-lg flex-shrink-0"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop";
+            }}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-gray-800 line-clamp-1">{item.title}</p>
             <p className="text-[10px] text-gray-400">Qty {item.quantity}</p>
@@ -235,7 +243,15 @@ const ReviewStep = ({ form, cartItems, subtotal, deliveryFee, onBack, onPay, pay
     <div className="space-y-2">
       {cartItems.map((item) => (
         <div key={item.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
-          <img src={item.coverImage} alt={item.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" />
+          <img
+            src={item.coverImage}
+            alt={item.title}
+            className="w-12 h-16 object-cover rounded-lg flex-shrink-0"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop";
+            }}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 line-clamp-1">{item.title}</p>
             <p className="text-xs text-gray-500">{item.author}</p>
