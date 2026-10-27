@@ -118,9 +118,7 @@ export async function injectBookMetaTags(html, bookId, host, protocol = 'https')
 
   const ogImageReplacement = `<meta property="og:image" content="${safeCoverImage}" />
     <meta property="og:image:secure_url" content="${safeCoverImage}" />
-    <meta property="og:image:type" content="${imageType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />`;
+    <meta property="og:image:type" content="${imageType}" />`;
 
   modifiedHtml = modifiedHtml.replace(/<meta property="og:image" content=".*?"\s*\/?>/gi, ogImageReplacement);
   modifiedHtml = modifiedHtml.replace(/<meta property="og:url" content=".*?"\s*\/?>/gi, `<meta property="og:url" content="${pageUrl}" />`);

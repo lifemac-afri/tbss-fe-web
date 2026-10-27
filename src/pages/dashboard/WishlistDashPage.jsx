@@ -6,7 +6,7 @@ import { useCart } from '../../context/CartContext';
 
 const WishlistDashPage = () => {
   const { wishlistItems, toggleWishlist } = useWishlist();
-  const { openAddToCartModal, cartItems } = useCart();
+  const { openAddToCartModal, isInCart } = useCart();
   const navigate = useNavigate();
 
   if (wishlistItems.length === 0) {
@@ -40,7 +40,7 @@ const WishlistDashPage = () => {
 
       <div className="space-y-3">
         {wishlistItems.map((book) => {
-          const inCart = cartItems.some((c) => c.id === book.id);
+          const inCart = isInCart(book.id);
           return (
             <div
               key={book.id}

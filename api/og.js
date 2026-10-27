@@ -128,9 +128,7 @@ export default async function handler(req, res) {
 
     const ogImageTags = `<meta property="og:image" content="${safeCoverImage}" />
     <meta property="og:image:secure_url" content="${safeCoverImage}" />
-    <meta property="og:image:type" content="${imageType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />`;
+    <meta property="og:image:type" content="${imageType}" />`;
 
     modifiedHtml = modifiedHtml.replace(/<meta property="og:image" content=".*?"\s*\/?>/gi, ogImageTags);
     modifiedHtml = modifiedHtml.replace(/<meta property="og:url" content=".*?"\s*\/?>/gi, `<meta property="og:url" content="${pageUrl}" />`);
@@ -148,7 +146,7 @@ export default async function handler(req, res) {
     modifiedHtml = modifiedHtml.replace(/<meta name="twitter:url" content=".*?"\s*\/?>/gi, `<meta name="twitter:url" content="${pageUrl}" />`);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600');
     return res.status(200).send(modifiedHtml);
   }
 
@@ -170,8 +168,6 @@ export default async function handler(req, res) {
     <meta property="og:image" content="${safeCoverImage}" />
     <meta property="og:image:secure_url" content="${safeCoverImage}" />
     <meta property="og:image:type" content="${imageType}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
     <meta property="og:url" content="${pageUrl}" />
     ${book?.price ? `<meta property="product:price:amount" content="${book.price}" /><meta property="product:price:currency" content="GHS" />` : ''}
 
@@ -182,7 +178,6 @@ export default async function handler(req, res) {
     <meta name="twitter:image" content="${safeCoverImage}" />
     <meta name="twitter:url" content="${pageUrl}" />
 
-    <script>window.location.href = "${pageUrl}";</script>
   </head>
   <body>
     <p>Redirecting to <a href="${pageUrl}">${title}</a>...</p>
@@ -190,6 +185,6 @@ export default async function handler(req, res) {
 </html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600');
   return res.status(200).send(fallbackHtml);
 }

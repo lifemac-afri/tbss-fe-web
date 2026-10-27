@@ -1,28 +1,20 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import api, { API_BASE } from '../lib/api';
+import api from '../lib/api';
 import { useAuth } from './AuthContext';
-import { DEFAULT_COVER } from '../lib/normalizeProduct';
+import { DEFAULT_COVER, resolveImageUrl } from '../lib/normalizeProduct';
 
 const CartContext = createContext(null);
 
+// coverImage / tag stay null when the API omits them, so loadCart can fall back to what the UI already knows.
 function normalizeItem(item) {
-  let rawImage = item.product_image || item.product_cover_image || item.image || item.coverImage || item.product?.coverImage || item.product?.image || item.product?.cover_image || null;
+  const rawImage = resolveImageUrl(item.product_image || item.product_cover_image || item.image || item.coverImage || item.product?.image || item.product?.coverImage || item.product?.cover_image);
 
-  if (rawImage && typeof rawImage === 'string') {
-    if (!rawImage.startsWith('http://') && !rawImage.startsWith('https://') && !rawImage.startsWith('data:')) {
-      const baseUrl = API_BASE || '';
-      rawImage = `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
-    }
-  } else {
-    rawImage = DEFAULT_COVER;
-  }
-
-  const tag = item.product_tag || item.tag || item.format || item.product_format || item.product?.tag || item.product?.format || item.cover_type || item.binding || 'Paperback';
+  const tag = item.product_tag || item.tag || item.format || item.product_format || item.product?.tag || item.product?.format || item.cover_type || item.binding || null;
 
   return {
     id: item.id,
-    productId: item.product?.id || item.product || item.productId || item.id,
-    title: item.product_name || item.product?.title || item.title || 'Unknown',
+    productId: item.product?.id ?? item.product ?? item.productId ?? item.id,
+    title: item.product_name || item.product?.title || item.title || null,
     price: parseFloat(item.product_price || item.price || item.product?.price || 0),
     quantity: item.quantity || 1,
     subtotal: parseFloat(item.subtotal || 0),
@@ -62,7 +54,16 @@ export const CartProvider = ({ children }) => {
       if (!res.ok) return;
       const data = await res.json();
       const items = (data.items || []).map(normalizeItem);
-      setCartItems(items);
+      setCartItems((prev) => items.map((item) => {
+        const known = prev.find((p) => String(p.productId) === String(item.productId));
+        return {
+          ...item,
+          title: item.title || known?.title || 'Unknown',
+          coverImage: item.coverImage || known?.coverImage || DEFAULT_COVER,
+          author: item.author || known?.author || '',
+          tag: item.tag || known?.tag || 'Paperback',
+        };
+      }));
       if (data.id) setCartId(data.id);
     } catch {} finally {
       setIsSyncing(false);
@@ -74,8 +75,13 @@ export const CartProvider = ({ children }) => {
     hasSynced.current = true;
   }, [isAuthenticated, loadCart]);
 
+  const isInCart = useCallback(
+    (productId) => cartItems.some((i) => String(i.productId) === String(productId)),
+    [cartItems]
+  );
+
   const addToCart = useCallback(async (product, qty = 1) => {
-    const existingIdx = cartItems.findIndex((i) => i.productId === product.id || i.id === product.id);
+    const existing = cartItems.find((i) => String(i.productId) === String(product.id));
 
     const maxAllowed = typeof product.stock_quantity === 'number'
       ? product.stock_quantity
@@ -83,79 +89,43 @@ export const CartProvider = ({ children }) => {
         ? product.stock
         : 99;
 
-    let rawImg = product.coverImage || product.image || product.product_image || DEFAULT_COVER;
-    if (rawImg && typeof rawImg === 'string' && !rawImg.startsWith('http://') && !rawImg.startsWith('https://') && !rawImg.startsWith('data:')) {
-      const baseUrl = API_BASE || '';
-      rawImg = `${baseUrl}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`;
-    }
-
-    const itemTag = product.tag || product.product_tag || product.format || product.product_format || 'Paperback';
-
-    if (isAuthenticated) {
-      if (existingIdx >= 0) {
-        const item = cartItems[existingIdx];
-        const itemMax = typeof item.stock_quantity === 'number' ? item.stock_quantity : maxAllowed;
-        const newQty = Math.min(item.quantity + qty, itemMax);
-        setCartItems((prev) =>
-          prev.map((i, idx) => idx === existingIdx ? { ...i, quantity: newQty } : i)
-        );
+    if (existing) {
+      const itemMax = typeof existing.stock_quantity === 'number' ? existing.stock_quantity : maxAllowed;
+      const newQty = Math.min(existing.quantity + qty, itemMax);
+      setCartItems((prev) => prev.map((i) => i.id === existing.id ? { ...i, quantity: newQty } : i));
+      if (!String(existing.id).startsWith('temp_')) {
         try {
-          await api.patch(`/api/cart/items/${item.id}/`, { quantity: newQty });
-        } catch {}
-      } else {
-        const cappedQty = Math.min(qty, maxAllowed);
-        const optimistic = {
-          id: `temp_${Date.now()}`,
-          productId: product.id,
-          title: product.title,
-          price: parseFloat(product.price || 0),
-          quantity: cappedQty,
-          coverImage: rawImg,
-          author: product.author || '',
-          tag: itemTag,
-          stock_quantity: maxAllowed,
-        };
-        setCartItems((prev) => [...prev, optimistic]);
-        try {
-          const res = await api.post('/api/cart/items/', { product: product.id, quantity: cappedQty });
-          if (res.ok) {
-            await loadCart();
-          }
+          await api.patch(`/api/cart/items/${existing.id}/`, { quantity: newQty });
         } catch {}
       }
-    } else {
-      setCartItems((prev) => {
-        const existing = prev.find((i) => (i.productId || i.id) === product.id);
-        if (existing) {
-          const itemMax = typeof existing.stock_quantity === 'number' ? existing.stock_quantity : maxAllowed;
-          const newQty = Math.min(existing.quantity + qty, itemMax);
-          return prev.map((i) =>
-            (i.productId || i.id) === product.id ? { ...i, quantity: newQty } : i
-          );
-        }
-        const cappedQty = Math.min(qty, maxAllowed);
-        return [...prev, {
-          id: product.id,
-          productId: product.id,
-          title: product.title,
-          price: parseFloat(product.price || 0),
-          quantity: cappedQty,
-          coverImage: rawImg,
-          author: product.author || '',
-          tag: itemTag,
-          stock_quantity: maxAllowed,
-        }];
-      });
-      try {
-        const cappedQty = Math.min(qty, maxAllowed);
-        await api.post('/api/cart/items/', { product: product.id, quantity: cappedQty });
-      } catch {}
+      return;
     }
-  }, [isAuthenticated, cartItems, loadCart]);
+
+    const cappedQty = Math.min(qty, maxAllowed);
+    // Optimistic line item carries the same title/cover the user just saw; loadCart keeps them if the API omits them.
+    const optimistic = {
+      id: `temp_${Date.now()}`,
+      productId: product.id,
+      title: product.title,
+      price: parseFloat(product.price || 0),
+      quantity: cappedQty,
+      coverImage: resolveImageUrl(product.coverImage || product.image || product.product_image) || DEFAULT_COVER,
+      author: product.author || '',
+      tag: product.tag || product.product_tag || product.format || product.product_format || 'Paperback',
+      stock_quantity: maxAllowed,
+    };
+    setCartItems((prev) => [...prev, optimistic]);
+    try {
+      const res = await api.post('/api/cart/items/', { product: product.id, quantity: cappedQty });
+      if (res.ok) {
+        await loadCart();
+      }
+    } catch {}
+  }, [cartItems, loadCart]);
 
   const removeFromCart = useCallback(async (itemId) => {
-    const item = cartItems.find((i) => i.id === itemId || i.productId === itemId);
-    setCartItems((prev) => prev.filter((i) => i.id !== itemId && i.productId !== itemId));
+    const item = cartItems.find((i) => i.id === itemId);
+    setCartItems((prev) => prev.filter((i) => i.id !== itemId));
     if (item?.id && !String(item.id).startsWith('temp_')) {
       try {
         await api.del(`/api/cart/items/${item.id}/`);
@@ -165,12 +135,12 @@ export const CartProvider = ({ children }) => {
 
   const updateQuantity = useCallback(async (itemId, quantity) => {
     if (quantity < 1) { removeFromCart(itemId); return; }
-    const item = cartItems.find((i) => i.id === itemId || i.productId === itemId);
+    const item = cartItems.find((i) => i.id === itemId);
     if (!item) return;
     const maxAllowed = typeof item.stock_quantity === 'number' ? item.stock_quantity : 99;
     const cappedQuantity = Math.min(quantity, maxAllowed);
     setCartItems((prev) =>
-      prev.map((i) => (i.id === itemId || i.productId === itemId) ? { ...i, quantity: cappedQuantity } : i)
+      prev.map((i) => i.id === itemId ? { ...i, quantity: cappedQuantity } : i)
     );
     if (item?.id && !String(item.id).startsWith('temp_')) {
       try {
@@ -196,6 +166,7 @@ export const CartProvider = ({ children }) => {
     isCartOpen,
     cartModalBook,
     isSyncing,
+    isInCart,
     addToCart,
     removeFromCart,
     updateQuantity,

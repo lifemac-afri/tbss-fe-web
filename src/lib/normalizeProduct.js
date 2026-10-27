@@ -2,22 +2,19 @@ import { API_BASE } from './api';
 
 export const DEFAULT_COVER = "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=387&auto=format&fit=crop";
 
+// Turns a relative media path from the API into an absolute URL. Returns null when there is no usable image.
+export function resolveImageUrl(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  if (/^(https?:|data:|blob:)/.test(raw) || !API_BASE) return raw;
+  return `${API_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
+}
+
 export function normalizeProduct(p) {
   const price = parseFloat(p.price || p.product_price || 0);
   const oldPrice = p.old_price ? parseFloat(p.old_price) : (p.oldPrice ? parseFloat(p.oldPrice) : null);
   const stockQty = parseInt(p.stock_quantity ?? p.stock ?? 0, 10);
-  
-  let rawImage = p.image || p.coverImage || p.product_image || p.cover_image || p.product_cover_image || null;
-  if (rawImage && typeof rawImage === 'string') {
-    if (!rawImage.startsWith('http://') && !rawImage.startsWith('https://') && !rawImage.startsWith('data:')) {
-      const baseUrl = API_BASE || '';
-      if (baseUrl) {
-        rawImage = `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
-      }
-    }
-  } else {
-    rawImage = DEFAULT_COVER;
-  }
+
+  const rawImage = resolveImageUrl(p.image || p.coverImage || p.product_image || p.cover_image || p.product_cover_image) || DEFAULT_COVER;
 
   const tag = p.tag || p.product_tag || p.format || p.product_format || p.cover_type || p.binding || 'Paperback';
 
@@ -66,7 +63,7 @@ export function normalizeOrder(o) {
       author: '',
       qty: item.quantity,
       price: parseFloat(item.price_at_purchase || item.product_price || 0),
-      coverImage: item.image || null,
+      coverImage: resolveImageUrl(item.image || item.product_image),
     })),
     trackingUrl: o.tracking_url || null,
     shipping_method: o.shipping_method || 'Standard Delivery',

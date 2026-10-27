@@ -17,10 +17,10 @@ const RankBadge = ({ rank }) => {
 };
 
 const BestsellerRow = ({ book, rank }) => {
-  const { openAddToCartModal, cartItems, openCart } = useCart();
+  const { openAddToCartModal, isInCart, openCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const wishlisted = isInWishlist(book.id);
-  const inCart = cartItems.some((i) => i.id === book.id);
+  const inCart = isInCart(book.id);
 
   return (
     <div className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 hover:shadow-md transition-shadow group">

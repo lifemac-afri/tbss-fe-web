@@ -8,9 +8,8 @@ const ShareModal = ({ isOpen, onClose, book }) => {
 
   if (!isOpen || !book) return null;
 
-  const shareUrl = window.location.href.startsWith('http')
-    ? window.location.href
-    : `${window.location.origin}/books/${book.id}`;
+  // Always share the canonical book URL (no query/hash) so link previews resolve this book's title and cover.
+  const shareUrl = `${window.location.origin}/books/${book.id}`;
 
   const shareTitle = `Check out "${book.title}" on Torchbearers Books!`;
   const shareText = `Check out "${book.title}" ${book.author ? `by ${book.author}` : ''} - ₵${book.price} on Torchbearers Books & Stationery Services!`;
@@ -162,7 +161,7 @@ const ShareModal = ({ isOpen, onClose, book }) => {
                   )}
                 </p>
                 <span className="text-[10px] text-gray-400 mt-1 block truncate">
-                  tbssgh.com/books/{book.id}
+                  {window.location.host}/books/{book.id}
                 </span>
               </div>
             </div>

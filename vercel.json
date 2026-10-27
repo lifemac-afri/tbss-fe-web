@@ -2,6 +2,13 @@
   "rewrites": [
     {
       "source": "/books/:id*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*([Ff]acebookexternalhit|[Ff]acebot|WhatsApp|Twitterbot|TelegramBot|LinkedInBot|Slackbot|Discordbot|Googlebot|bingbot|Applebot|Pinterest|SkypeUriPreview|redditbot|Embedly|vkShare|Quora Link Preview|curl|Wget|python-requests).*"
+        }
+      ],
       "destination": "/api/og"
     },
     {

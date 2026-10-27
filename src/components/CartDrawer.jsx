@@ -81,7 +81,7 @@ const CartDrawer = () => {
                 >
                   {/* Cover */}
                   <Link
-                    to={`/books/${item.id}`}
+                    to={`/books/${item.productId}`}
                     onClick={closeCart}
                     className="flex-shrink-0"
                   >
@@ -104,7 +104,7 @@ const CartDrawer = () => {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <Link
-                      to={`/books/${item.id}`}
+                      to={`/books/${item.productId}`}
                       onClick={closeCart}
                       className="block"
                     >

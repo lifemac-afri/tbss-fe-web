@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '../lib/api';
 import { useAuth } from './AuthContext';
+import { DEFAULT_COVER, resolveImageUrl } from '../lib/normalizeProduct';
 
 const WishlistContext = createContext(null);
 
@@ -11,7 +12,9 @@ function normalizeWishlistItem(entry) {
     wishlistEntryId: entry.id,
     title: p.title || entry.title || 'Unknown',
     price: parseFloat(p.price || entry.price || 0),
-    coverImage: p.image || entry.coverImage || null,
+    coverImage: resolveImageUrl(p.image || p.coverImage || p.product_image || entry.coverImage) || DEFAULT_COVER,
+    tag: p.tag || p.format || entry.tag || 'Paperback',
+    stock_quantity: typeof p.stock_quantity === 'number' ? p.stock_quantity : entry.stock_quantity,
     author: p.author || entry.author || '',
     average_rating: p.average_rating || 0,
     in_stock: entry.in_stock !== false,
@@ -58,8 +61,10 @@ export const WishlistProvider = ({ children }) => {
         id: book.id,
         title: book.title,
         price: parseFloat(book.price || 0),
-        coverImage: book.coverImage || book.image || null,
+        coverImage: resolveImageUrl(book.coverImage || book.image) || DEFAULT_COVER,
         author: book.author || '',
+        tag: book.tag || 'Paperback',
+        stock_quantity: book.stock_quantity,
         addedAt: Date.now(),
       };
       setWishlistItems((prev) => [...prev, optimistic]);

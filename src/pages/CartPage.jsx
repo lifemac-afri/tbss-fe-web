@@ -62,7 +62,7 @@ const CartPage = () => {
                   className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-4 shadow-sm"
                 >
                   {/* Cover */}
-                  <Link to={`/books/${item.id}`} className="flex-shrink-0">
+                  <Link to={`/books/${item.productId}`} className="flex-shrink-0">
                     <div className="rounded-xl overflow-hidden shadow-md bg-gray-100" style={{ width: '72px', height: '100px' }}>
                       <img
                         src={item.coverImage}
@@ -78,7 +78,7 @@ const CartPage = () => {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <Link to={`/books/${item.id}`}>
+                    <Link to={`/books/${item.productId}`}>
                       <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 hover:text-[#F46B03] transition-colors font-poppins">
                         {item.title}
                       </h3>

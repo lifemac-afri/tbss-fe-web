@@ -6,7 +6,8 @@ import WishlistContext from '../context/WishlistContext';
 // Provide lightweight mock context values so BookCard renders
 // without real auth or API calls.
 const mockCart = (inCart = false) => ({
-  cartItems: inCart ? [{ id: 'book-1' }] : [],
+  cartItems: inCart ? [{ id: 'book-1', productId: 'book-1' }] : [],
+  isInCart: () => inCart,
   openAddToCartModal: () => {},
   openCart: () => {},
 });

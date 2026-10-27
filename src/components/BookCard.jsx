@@ -24,12 +24,12 @@ const BookCard = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  const { openAddToCartModal, cartItems, openCart } = useCart();
+  const { openAddToCartModal, isInCart, openCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
   const book = { id, title, author, rating, reviews, price, oldPrice, discount, tag, coverImage, stockStatus, ...rest };
   const wishlisted = isInWishlist(id);
-  const inCart = cartItems.some((item) => item.id === id);
+  const inCart = isInCart(id);
 
   const goToDetail = () => { if (id) navigate(`/books/${id}`); };
 
